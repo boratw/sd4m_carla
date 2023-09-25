@@ -7,7 +7,8 @@ EPS = 1e-6
 
 class GaussianPolicy:
     def __init__(self, name, input_dim, output_dim, hidden_sizes, hidden_nonlinearity=tf.nn.relu, reuse=False, output_tanh=False,
-        input_tensor=None, additional_input=False, additional_input_dim=0, additional_input_tensor=None, random_batch=None, traj_dim=None, sig_clip_min=-10.0,sig_clip_max=2.0 ):
+        input_tensor=None, additional_input=False, additional_input_dim=0, additional_input_tensor=None, random_batch=None, traj_dim=None,
+        sig_clip_min=-10.0,sig_clip_max=2.0, input_dropout=None ):
         self.random_batch = random_batch
         self.output_tanh = output_tanh
         self.output_len = output_dim
@@ -37,6 +38,8 @@ class GaussianPolicy:
                 trainable=True)
 
             fc1 = tf.matmul(self.layer_input, w1) + b1
+            if input_dropout is not None:
+                fc1 = tf.nn.dropout(fc1, rate=input_dropout)
             if hidden_nonlinearity == tf.nn.leaky_relu:
                 fc1 = tf.nn.leaky_relu(fc1, alpha=0.05)
             elif hidden_nonlinearity is not None:
@@ -64,6 +67,8 @@ class GaussianPolicy:
                 trainable=True)
 
             fc2 = tf.matmul(fc1, w2) + b2
+            if input_dropout is not None:
+                fc2 = tf.nn.dropout(fc2, rate=input_dropout)
             if hidden_nonlinearity == tf.nn.leaky_relu:
                 fc2 = tf.nn.leaky_relu(fc2, alpha=0.05)
             elif hidden_nonlinearity is not None:
@@ -86,6 +91,8 @@ class GaussianPolicy:
                     initializer=tf.zeros_initializer(dtype=tf.float32),
                     trainable=True)
                 fc3 = tf.matmul(fc2, w3) + b3
+                if input_dropout is not None:
+                    fc3 = tf.nn.dropout(fc3, rate=input_dropout)
                 if hidden_nonlinearity == tf.nn.leaky_relu:
                     fc3 = tf.nn.leaky_relu(fc3, alpha=0.05)
                 elif hidden_nonlinearity is not None:
@@ -119,11 +126,12 @@ class GaussianPolicy:
             self.regularization_loss = tf.reduce_mean(self.dist.kl_divergence(self.prior))
 
             self.trainable_params = tf.trainable_variables(scope=tf.get_variable_scope().name)
+            self.l2_loss = tf.reduce_mean([tf.reduce_mean(p ** 2) for p in self.trainable_params])
     def log_li(self, action):
         if self.output_tanh:
-            return (self.dist.log_prob(tf.math.atanh(tf.clip_by_value(action, -0.999, 0.999))) - self.squash_correction(action)) / self.output_len  * 2.
+            return (tf.reduce_sum(self.dist.log_prob(tf.math.atanh(tf.clip_by_value(action, -0.999, 0.999))), axis=1) - self.squash_correction(action)) / self.output_len  * 2.
         else:
-            self.log_pi = self.dist.log_prob(action)
+            self.log_pi = tf.reduce_sum(self.dist.log_prob(action), axis=1)
 
     def squash_correction(self, actions):
         return tf.reduce_sum(tf.log(1 - actions ** 2 + EPS), axis=1)

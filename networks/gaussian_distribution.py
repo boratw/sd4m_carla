@@ -8,7 +8,8 @@ EPS = 1e-6
 
 class GaussianDistribution:
     def __init__(self, name, input_dim, output_dim, hidden_sizes, hidden_nonlinearity=tf.nn.relu, reuse=False,
-        input_tensor=None, additional_input=False, additional_input_dim=0, additional_input_tensor=None, random_batch=None, traj_dim=None, sig_clip_min=-10.0,sig_clip_max=2.0 ):
+        input_tensor=None, additional_input=False, additional_input_dim=0, additional_input_tensor=None, random_batch=None, 
+        traj_dim=None, sig_clip_min=-10.0,sig_clip_max=2.0, input_dropout=None ):
         self.random_batch = random_batch
         with tf.variable_scope(name, reuse=reuse):
 
@@ -36,6 +37,8 @@ class GaussianDistribution:
                 trainable=True)
 
             fc1 = tf.matmul(self.layer_input, w1) + b1
+            if input_dropout is not None:
+                fc1 = tf.nn.dropout(fc1, rate=input_dropout)
             if hidden_nonlinearity == tf.nn.leaky_relu:
                 fc1 = tf.nn.leaky_relu(fc1, alpha=0.05)
             elif hidden_nonlinearity is not None:
@@ -63,6 +66,8 @@ class GaussianDistribution:
                 trainable=True)
 
             fc2 = tf.matmul(fc1, w2) + b2
+            if input_dropout is not None:
+                fc2 = tf.nn.dropout(fc2, rate=input_dropout)
             if hidden_nonlinearity == tf.nn.leaky_relu:
                 fc2 = tf.nn.leaky_relu(fc2, alpha=0.05)
             elif hidden_nonlinearity is not None:
@@ -85,6 +90,8 @@ class GaussianDistribution:
                     initializer=tf.zeros_initializer(dtype=tf.float32),
                     trainable=True)
                 fc3 = tf.matmul(fc2, w3) + b3
+                if input_dropout is not None:
+                    fc3 = tf.nn.dropout(fc3, rate=input_dropout)
                 if hidden_nonlinearity == tf.nn.leaky_relu:
                     fc3 = tf.nn.leaky_relu(fc3, alpha=0.05)
                 elif hidden_nonlinearity is not None:
@@ -117,6 +124,7 @@ class GaussianDistribution:
             self.magnitude_loss = tf.sqrt(tf.reduce_mean(self.reparameterized ** 2, axis=1)) - 1.
 
             self.trainable_params = tf.trainable_variables(scope=tf.get_variable_scope().name)
+            self.l2_loss = tf.reduce_mean([tf.reduce_mean(p ** 2) for p in self.trainable_params])
 
     def log_li(self, x, clip_mu=False, sig_gradient=True):
         if sig_gradient:
