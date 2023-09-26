@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2021 Computer Vision Center (CVC) at the Universitat Autonoma de
-# Barcelona (UAB).
-#
-# This work is licensed under the terms of the MIT license.
-# For a copy, see <https://opensource.org/licenses/MIT>.
-
-"""Example script to generate traffic in the simulation"""
+# Copyright (c) 2023 Taewoo Kim
 
 import glob
 import os
@@ -45,13 +39,13 @@ traj_track_len = 10
 latent_len = 3
 latent_body_len = 2
 latent_preserve = 4
-task_num = 3
+task_num = 5
 env_num = 64
 
 learner_batch = 16
 explorer_batch = 64
 
-log_name = "train_log/Train2_1/log_" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+log_name = "train_log/Train3/log_" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 log_file = open(log_name + ".txt", "wt")
 
 
@@ -88,8 +82,10 @@ try:
 
         bp_library = world.get_blueprint_library()
         blueprints = [bp_library.find("vehicle.neubility.delivery"),
-                    bp_library.find("vehicle.neubility.delivery_leftbig"),
-                    bp_library.find("vehicle.neubility.delivery_rightbig")]
+                    bp_library.find("vehicle.neubility.delivery_nofl"),
+                    bp_library.find("vehicle.neubility.delivery_nofr"),
+                    bp_library.find("vehicle.neubility.delivery_norl"),
+                    bp_library.find("vehicle.neubility.delivery_norr")]
         for exp in range(1, 1000001):
             cur_move = [0.] * task_num
             cur_reward = [0.] * task_num
@@ -163,10 +159,10 @@ try:
                         v = actor.get_velocity()
                         vs = np.sqrt(v.x * v.x + v.y * v.y)
                         control = carla.VehicleControl()
-                        control.fl=float(actions[i][0] * (300.0 if task == 1 else 200.0))
-                        control.fr=float(actions[i][1] * (300.0 if task == 2 else 200.0))
-                        control.bl=float(actions[i][2] * (300.0 if task == 1 else 200.0))
-                        control.br=float(actions[i][3] * (300.0 if task == 2 else 200.0))
+                        control.fl=float(actions[i][0] * (0.0 if task == 1 else 200.0))
+                        control.fr=float(actions[i][1] * (0.0 if task == 2 else 200.0))
+                        control.bl=float(actions[i][2] * (0.0 if task == 3 else 200.0))
+                        control.br=float(actions[i][3] * (0.0 if task == 4 else 200.0))
                         control.gear = 1
                         control.manual_gear_shift = True
                         control.hand_brake = False
@@ -191,7 +187,7 @@ try:
                         fx, fy = rotate(f.x, f.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
                         nextstates.append([float(step % traj_len), px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch])
 
-                        prevscore = np.sqrt((current_goal[i][0] - states[i][0]) ** 2 + (current_goal[i][1] - states[i][1]) ** 2)
+                        prevscore = np.sqrt((current_goal[i][0] - states[i][1]) ** 2 + (current_goal[i][1] - states[i][2]) ** 2)
                         score = np.sqrt((current_goal[i][0] - px) ** 2 + (current_goal[i][1] - py) ** 2)
                         survive = (abs(tr.rotation.roll) < 45) and (abs(tr.rotation.pitch) < 45)
                         if survive_vector[i] :

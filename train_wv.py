@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2021 Computer Vision Center (CVC) at the Universitat Autonoma de
-# Barcelona (UAB).
-#
-# This work is licensed under the terms of the MIT license.
-# For a copy, see <https://opensource.org/licenses/MIT>.
+# Copyright (c) 2023 Taewoo Kim
 
-"""Example script to generate traffic in the simulation"""
 
 import glob
 import os

@@ -1,3 +1,5 @@
+# Copyright (c) 2023 Taewoo Kim
+
 import numpy as np
 import tensorflow.compat.v1 as tf
 import math
@@ -75,6 +77,8 @@ class Skill_Learner:
                 self.learner_agent_unity = tf.reduce_mean(tf.math.reduce_std(encoded_latent_agent_batched, axis=1) )
                 self.encoded_latent_agent_mean = tf.reduce_mean(encoded_latent_agent_batched, axis=1)
                 self.learner_agent_diverse = tf.reduce_mean(tf.math.reduce_std(self.encoded_latent_agent_mean, axis=0))
+                self.encoded_latent_body_mean = tf.reduce_mean(encoded_latent_body, axis=0)
+                self.encoded_latent_body_var = tf.math.reduce_variance(encoded_latent_body, axis=0)
 
                 self.learner_optimizer_body = tf.train.AdamOptimizer(learner_lr)
                 self.learner_optimizer_action = tf.train.AdamOptimizer(learner_lr)
@@ -123,18 +127,11 @@ class Skill_Learner:
                 return x
             self.trainable_dict = {nameremover(var.name, self.name) : var for var in self.trainable_params}
             self.zero_latent_mean = np.zeros((task_num, latent_len - latent_body_len), np.float32)
+            self.zero_latent_body_mean = np.zeros((task_num, latent_body_len), np.float32)
+            self.zero_latent_body_var = np.zeros((task_num, latent_body_len), np.float32)
 
 
     def get_goal(self, input_latent, discrete=False):
-        input_list = {self.input_latent_body : [input_latent], self.input_dropout : 0.0}
-        sess = tf.get_default_session()
-        if discrete:
-            output = sess.run(self.sampler_output_discrete, input_list)
-        else:
-            output = sess.run(self.sampler_output_stochastic, input_list)
-        return output[0]
-
-    def get_goal_batch(self, input_latent, discrete=False):
         input_list = {self.input_latent_body : input_latent, self.input_dropout : 0.0}
         sess = tf.get_default_session()
         if discrete:
@@ -144,15 +141,6 @@ class Skill_Learner:
         return output
 
     def get_learned_goal(self, input_latent, discrete=False):
-        input_list = {self.input_latent_body : [input_latent], self.input_dropout : 0.0}
-        sess = tf.get_default_session()
-        if discrete:
-            output = sess.run(self.learner_output_discrete_body, input_list)
-        else:
-            output = sess.run(self.learner_output_stochastic_body, input_list)
-        return output[0]
-
-    def get_learned_goal_batch(self, input_latent, discrete=False):
         input_list = {self.input_latent_body : input_latent, self.input_dropout : 0.0}
         sess = tf.get_default_session()
         if discrete:
@@ -162,15 +150,6 @@ class Skill_Learner:
         return output
 
     def get_action(self, input_state, input_latent, discrete=False):
-        input_list = {self.input_state : [input_state], self.input_latent : [input_latent], self.input_dropout : 0.0}
-        sess = tf.get_default_session()
-        if discrete:
-            output = sess.run(self.learner_output_discrete_action, input_list)
-        else:
-            output = sess.run(self.learner_output_stochastic_action, input_list)
-        return output[0]
-
-    def get_action_batch(self, input_state, input_latent, discrete=False):
         input_list = {self.input_state : input_state, self.input_latent : input_latent, self.input_dropout : 0.0}
         sess = tf.get_default_session()
         if discrete:
@@ -179,14 +158,16 @@ class Skill_Learner:
             output = sess.run(self.learner_output_stochastic_action, input_list)
         return output
 
+
     def optimize_batch(self, input_state_traj, input_body_traj, input_action_traj,):
         input_list = {self.input_state_traj : input_state_traj, self.input_body_traj : input_body_traj, self.input_action_traj : input_action_traj,
                     self.input_dropout : 0.1}
         sess = tf.get_default_session()
 
-        _, _, l1, l6, l7, l6_2, l7_2, l5, l10, l11, l12 = sess.run([self.learner_train_body, self.learner_train_action,
-            self.learner_body_likelihood, self.learner_body_kl_loss, self.learner_body_l2_loss, self.learner_body_kl_loss, self.learner_body_l2_loss, 
-            self.learner_action_likelihood, self.learner_agent_unity, self.learner_agent_diverse, self.encoded_latent_agent_mean], input_list)
+        _, _, l1, l6, l7, l6_2, l7_2, l5, l10, l11, l12, l13, l14 = sess.run([self.learner_train_body, self.learner_train_action,
+            self.learner_body_likelihood, self.learner_body_kl_loss, self.learner_body_l2_loss, self.learner_agent_kl_loss, self.learner_agent_l2_loss, 
+            self.learner_action_likelihood, self.learner_agent_unity, self.learner_agent_diverse, self.encoded_latent_agent_mean,
+            self.encoded_latent_body_mean, self.encoded_latent_body_var], input_list)
         _, l2, l3, l4 = sess.run([self.sampler_train, self.sampler_likelihood, self.random_sampler_likelihood, self.sampler_disperse_loss], input_list)
 
         self.log_learner_li_body += l1
@@ -196,6 +177,8 @@ class Skill_Learner:
         self.log_learner_unity_agent += l10
         self.log_learner_div_agent += l11
         self.log_learner_lat_mean += l12
+        self.log_learner_lat_body_mean += l13
+        self.log_learner_lat_body_var += l14
         self.log_sampler_li += l2
         self.log_sampler_random_li += l3
         self.log_sampler_dis += l4
@@ -212,6 +195,8 @@ class Skill_Learner:
         self.log_learner_reg_agent = 0
         self.log_learner_unity_agent = 0
         self.log_learner_div_agent = 0
+        self.log_learner_lat_body_mean = self.zero_latent_body_mean.copy()
+        self.log_learner_lat_body_var = self.zero_latent_body_var.copy()
         self.log_learner_lat_mean = self.zero_latent_mean.copy()
         self.log_sampler_li = 0
         self.log_sampler_random_li = 0
@@ -228,6 +213,8 @@ class Skill_Learner:
         self.log_learner_unity_agent = 0
         self.log_learner_div_agent = 0
         self.log_learner_lat_mean = self.zero_latent_mean.copy()
+        self.log_learner_lat_body_mean = self.zero_latent_body_mean.copy()
+        self.log_learner_lat_body_var = self.zero_latent_body_var.copy()
         self.log_sampler_li = 0
         self.log_sampler_random_li = 0
         self.log_sampler_dis = 0
@@ -238,6 +225,7 @@ class Skill_Learner:
         return "\t" + self.name + "_Learner_Likelihood_Body\t" + self.name + "_Learner_Likelihood_Action\t" \
             + self.name + "_Learner_Body_Regularization\t" + self.name + "_Learner_Agent_Regularization\t" \
             + self.name + "_Learner_Agent_Unity\t" + self.name + "_Learner_Agent_Diverse\t" + self.name + "_Learner_Latent_Mean" \
+             + self.name + "_Learner_Latent_Body_Mean" + self.name + "_Learner_Latent_Body_Var" \
             + self.name + "_Sampler_Likelihood\t" + self.name + "_Sampler_Random_Likelihood\t" + self.name + "_Sampler_Disperse\t" 
             
     
@@ -248,6 +236,8 @@ class Skill_Learner:
             + "\t" + str(self.log_learner_reg_body / log_num_learner) + "\t" + str(self.log_learner_reg_agent / log_num_learner) \
             + "\t" + str(self.log_learner_unity_agent / log_num_learner_action) + "\t" + str(self.log_learner_div_agent / log_num_learner_action)\
             + "\t" + str(self.log_learner_lat_mean / log_num_learner_action).replace("\n"," ")\
+            + "\t" + str(self.log_learner_lat_body_mean / log_num_learner_action).replace("\n"," ")\
+            + "\t" + str(self.log_learner_lat_body_var / log_num_learner_action).replace("\n"," ")\
             + "\t" + str(self.log_sampler_li / log_num_learner) + "\t" + str(self.log_sampler_random_li / log_num_learner) + "\t" + str(self.log_sampler_dis / log_num_learner) 
 
     def log_print(self):
@@ -261,6 +251,8 @@ class Skill_Learner:
             + "\tLearner_Agent_Unity              : " + str(self.log_learner_unity_agent / log_num_learner_action) + "\n" \
             + "\tLearner_Agent_Diverse            : " + str(self.log_learner_div_agent / log_num_learner_action) + "\n" \
             + "\tLearner_Latent_Mean              : " + str(self.log_learner_lat_mean / log_num_learner_action).replace("\n"," ") + "\n" \
+            + "\tLearner_Latent_Body_Mean         : " + str(self.log_learner_lat_body_mean / log_num_learner_action).replace("\n"," ") + "\n" \
+            + "\tLearner_Latent_Body_Var          : " + str(self.log_learner_lat_body_var / log_num_learner_action).replace("\n"," ") + "\n" \
             + "\tSampler_Likelihood               : " + str(self.log_sampler_li / log_num_learner) + "\n" \
             + "\tSampler_Random_Likelihood        : " + str(self.log_sampler_random_li / log_num_learner) + "\n" \
             + "\tSampler_Disperse                 : " + str(self.log_sampler_dis / log_num_learner) + "\n" )
