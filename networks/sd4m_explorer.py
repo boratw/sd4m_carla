@@ -125,7 +125,7 @@ class Skill_Explorer:
     def optimize_batch(self, input_state, input_next_state, input_action, input_goal, input_reward, input_survive, input_iter=None):
         input_list = {self.input_state : input_state, self.input_next_state : input_next_state, 
             self.input_action : input_action, self.input_goal:input_goal, self.input_reward : input_reward,
-            self.input_survive : input_survive, self.input_iter : input_iter, self.input_dropout : 0.9}
+            self.input_survive : input_survive, self.input_iter : input_iter, self.input_dropout : 0.1}
         sess = tf.get_default_session()
 
         _, _, l1, l2 = sess.run([self.explorer_qvalue1_train, self.explorer_qvalue2_train,

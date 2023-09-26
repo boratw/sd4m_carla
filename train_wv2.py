@@ -37,7 +37,7 @@ client.set_timeout(10.0)
 
 agent_num = 150
 
-state_len = 8
+state_len = 11
 action_len = 4
 goal_len = 2
 traj_len = 50
@@ -51,7 +51,7 @@ env_num = 64
 learner_batch = 16
 explorer_batch = 64
 
-log_name = "train_log/Train2/log_" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+log_name = "train_log/Train2_1/log_" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 log_file = open(log_name + ".txt", "wt")
 
 
@@ -119,7 +119,7 @@ try:
                     yawcos = np.cos(yaw)
                     vx, vy = rotate(v.x, v.y, yawsin, yawcos)
                     ax, ay = rotate(a.x, a.y, yawsin, yawcos)
-                    states.append([0., 0., vx, vy, ax, ay, tr.rotation.roll, tr.rotation.pitch])
+                    states.append([0., 0., 0., vx, vy, ax, ay, 1., 0., tr.rotation.roll, tr.rotation.pitch])
                 print( len(history_learner[task]))
                 for step in range(500):
                     
@@ -130,7 +130,7 @@ try:
                                 desired_num = env_num
                             if desired_num > 0:
                                 latent = np.random.normal(size=(desired_num, latent_body_len))
-                                goal = learner.get_goal_batch(latent, True)
+                                goal = learner.get_goal_batch(latent, True) * 1.25
                                 if desired_num != env_num:
                                     goal = np.concatenate([goal, 
                                         np.array([[[4., 0.], [8., 0.], [12., 0.], [16., 0.], [20., 0.]] for _ in range(env_num - desired_num)])])
@@ -184,24 +184,28 @@ try:
                         a = actor.get_acceleration()
                         tr = actor.get_transform()
                         yaw = tr.rotation.yaw * -0.017453293
+                        f = tr.get_forward_vector()
                         px, py = rotate(tr.location.x - first_traj_pos[i][0], tr.location.y - first_traj_pos[i][1], first_traj_yaw[i][0], first_traj_yaw[i][1])
                         vx, vy = rotate(v.x, v.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
                         ax, ay = rotate(a.x, a.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
-                        nextstates.append([px, py, vx, vy, ax, ay, tr.rotation.roll, tr.rotation.pitch])
+                        fx, fy = rotate(f.x, f.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
+                        nextstates.append([float(step % traj_len), px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch])
 
                         prevscore = np.sqrt((current_goal[i][0] - states[i][0]) ** 2 + (current_goal[i][1] - states[i][1]) ** 2)
                         score = np.sqrt((current_goal[i][0] - px) ** 2 + (current_goal[i][1] - py) ** 2)
                         survive = (abs(tr.rotation.roll) < 45) and (abs(tr.rotation.pitch) < 45)
                         if survive_vector[i] :
                             if survive:
-                                history_policy[task].append([states[i], nextstates[i], actions[i], current_goal[i], [(prevscore - score) * 20.], [1.]])
+                                history_policy[task].append([states[i], nextstates[i][:], actions[i], current_goal[i], [(prevscore - score) * 10. + 0.01], [1.]])
                             else:
-                                history_policy[task].append([states[i], nextstates[i], actions[i], current_goal[i], [(prevscore - score) * 20. - 10.], [0.]])
+                                history_policy[task].append([states[i], nextstates[i][:], actions[i], current_goal[i], [(prevscore - score) * 10. - 1.], [0.]])
                                 survive_vector[i] = survive
 
 
                         if step % traj_track_len == (traj_track_len - 1):
-                            current_goal[i] += goal[i][(step % traj_len) // traj_track_len]
+                            traj_tack_step = (step % traj_len) // traj_track_len
+                            if traj_tack_step != (traj_len // traj_track_len - 1):
+                                current_goal[i] = current_goal[i] - goal[i][traj_tack_step] +  goal[i][traj_tack_step + 1]
 
                         cur_reward[task] += (prevscore - score)
 
@@ -209,6 +213,7 @@ try:
                         action_traj[i].append(actions[i])
                         if step % traj_track_len == traj_track_len - 1:
                             body_traj[i].append(np.array([px, py]))
+                        nextstates[-1][0] += 1.
 
                     states = nextstates
                     if step % traj_len == traj_len - 1:

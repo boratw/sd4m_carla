@@ -14,7 +14,7 @@ class Skill_Learner:
         encoder_body_hidden_len=[256, 256], encoder_actor_hidden_len=[256, 256], decoder_body_hidden_len=[256, 256],
         decoder_action_hidden_len=[256, 256], vae_hidden_nonlinearity=tf.nn.tanh, random_batch=8,
         learner_lr=0.001, sampler_lr=0.001, sampler_diverse=0.9, sampler_disperse=0.5,
-        learner_kl_reg=0.001, learner_unity=0.01, learner_diverse=0., learner_l2_reg=0.0001) :
+        learner_kl_reg=0.001, learner_unity=0.01, learner_diverse=0.005, learner_l2_reg=0.0001) :
 
         self.name = "Skill_Learner" + name
         body_len = traj_len // traj_track_len
