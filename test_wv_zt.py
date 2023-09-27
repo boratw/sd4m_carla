@@ -47,8 +47,8 @@ learner_batch = 16
 mean_latent = [2.52, 0.39, -3.06]
 
 def GetColor(z1, z2):
-    z1 = z1 / 3.0
-    z2 = z2 / 3.0
+    z1 = z1 / 2.0
+    z2 = z2 / 2.0
     color =  ( int( np.clip((0.5 + 1.28  * z2) * 255, 0, 255 ) ),
                 int( np.clip((0.5 -  0.214 * z1 - 0.380 * z2) * 255, 0, 255 )),
                 int( np.clip((0.5 + 2.128 * z1) * 255, 0, 255) ))
@@ -84,7 +84,7 @@ try:
         for task in range(task_num):
             log_traj_task_file = open(log_name + "traj_task_" + str(task) + ".txt", "wt")
             traj_task_map = np.full((1024, 1024, 3), 255, np.uint8)
-            for zt_x_a, zt_y_a in itertools.product([-3., -1.8, -0.6, 0.6, 1.8], [-4., -2.4, -0.8, 0.8, 2.4]):
+            for zt_x_a, zt_y_a in itertools.product([-2., -1.2, -0.4, 0.4, 1.2], [-2., -1.2, -0.4, 0.4, 1.2]):
                 vehicles_list = []
                 latent = []
                 action_latent = []
@@ -93,8 +93,8 @@ try:
                     actor = world.spawn_actor(blueprints[task], spawn_point)
                     vehicles_list.append(actor)
 
-                    latent.append([zt_x_a + x * 0.15, zt_y_a + y * 0.15])
-                    action_latent.append([zt_x_a + x * 0.15, zt_y_a + y * 0.15, mean_latent[task]])
+                    latent.append([zt_x_a + x * 0.1, zt_y_a + y * 0.1])
+                    action_latent.append([zt_x_a + x * 0.1, zt_y_a + y * 0.1, mean_latent[task]])
                 
                 goal = learner.get_goal(latent, True) * 1.25
                 if task == 0:
@@ -143,10 +143,12 @@ try:
                     vehiclecontrols = []
                     for i, actor in enumerate(vehicles_list):
                         control = carla.VehicleControl()
-                        control.fl=float(actions[i][0] * (300.0 if task == 1 else 200.0))
-                        control.fr=float(actions[i][1] * (300.0 if task == 2 else 200.0))
-                        control.bl=float(actions[i][2] * (300.0 if task == 1 else 200.0))
-                        control.br=float(actions[i][3] * (300.0 if task == 2 else 200.0))
+                        wl = (actions[i][0] + actions[i][2]) / 2.
+                        wr = (actions[i][1] + actions[i][3]) / 2.
+                        control.fl=float(wl * (300.0 if task == 1 else 200.0))
+                        control.fr=float(wr * (300.0 if task == 2 else 200.0))
+                        control.bl=float(wl * (300.0 if task == 1 else 200.0))
+                        control.br=float(wr * (300.0 if task == 2 else 200.0))
                         control.gear = 1
                         control.manual_gear_shift = True
                         control.hand_brake = False

@@ -106,16 +106,8 @@ class Skill_Explorer:
                 return x
             self.trainable_dict = {nameremover(var.name, self.name) : var for var in self.trainable_params}
 
-    def get_action(self, input_state, input_goal, discrete=False):
-        input_list = {self.input_state : [input_state], self.input_goal : [input_goal], self.input_dropout : 0.0}
-        sess = tf.get_default_session()
-        if discrete:
-            output = sess.run(self.explorer_policy.mu, input_list)
-        else:
-            output = sess.run(self.explorer_policy.reparameterized, input_list)
-        return output[0]
 
-    def get_action_batch(self, input_state, input_goal, discrete=False):
+    def get_action(self, input_state, input_goal, discrete=False):
         input_list = {self.input_state : input_state, self.input_goal : input_goal, self.input_dropout : 0.0}
         sess = tf.get_default_session()
         if discrete:
@@ -124,7 +116,7 @@ class Skill_Explorer:
             output = sess.run(self.explorer_policy.reparameterized, input_list)
         return output
 
-    def optimize_batch(self, input_state, input_next_state, input_action, input_goal, input_reward, input_survive, input_iter=None):
+    def optimize(self, input_state, input_next_state, input_action, input_goal, input_reward, input_survive, input_iter=None):
         input_list = {self.input_state : input_state, self.input_next_state : input_next_state, 
             self.input_action : input_action, self.input_goal:input_goal, self.input_reward : input_reward,
             self.input_survive : input_survive, self.input_iter : input_iter, self.input_dropout : 0.1}

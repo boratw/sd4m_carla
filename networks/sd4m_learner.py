@@ -159,7 +159,7 @@ class Skill_Learner:
         return output
 
 
-    def optimize_batch(self, input_state_traj, input_body_traj, input_action_traj,):
+    def optimize(self, input_state_traj, input_body_traj, input_action_traj,):
         input_list = {self.input_state_traj : input_state_traj, self.input_body_traj : input_body_traj, self.input_action_traj : input_action_traj,
                     self.input_dropout : 0.1}
         sess = tf.get_default_session()

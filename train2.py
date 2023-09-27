@@ -2,6 +2,7 @@
 
 # Copyright (c) 2023 Taewoo Kim
 
+
 import glob
 import os
 import sys
@@ -32,20 +33,20 @@ client.set_timeout(10.0)
 agent_num = 150
 
 state_len = 11
-action_len = 4
+action_len = 2
 goal_len = 2
 traj_len = 50
 traj_track_len = 10
 latent_len = 3
 latent_body_len = 2
 latent_preserve = 4
-task_num = 5
+task_num = 15
 env_num = 64
 
 learner_batch = 16
 explorer_batch = 64
 
-log_name = "train_log/Train3/log_" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+log_name = "train_log/Train4/log_" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 log_file = open(log_name + ".txt", "wt")
 
 
@@ -81,21 +82,21 @@ try:
         world.apply_settings(settings)
 
         bp_library = world.get_blueprint_library()
-        blueprints = [bp_library.find("vehicle.neubility.delivery"),
-                    bp_library.find("vehicle.neubility.delivery_nofl"),
-                    bp_library.find("vehicle.neubility.delivery_nofr"),
-                    bp_library.find("vehicle.neubility.delivery_norl"),
-                    bp_library.find("vehicle.neubility.delivery_norr")]
-        for exp in range(1, 1000001):
+        blueprints = [bp_library.find("vehicle.mini.cooper_s"),
+                    bp_library.find("vehicle.lincoln.mkz_2017"),
+                    bp_library.find("vehicle.volkswagen.t2")]
+        for exp in range(1, 1001):
             cur_move = [0.] * task_num
             cur_reward = [0.] * task_num
             for task in range(task_num):
                 vehicles_list = []
+                task_t = task % 5
+                task_v = task // 5
                 for x in range(8):
                     for y in range(8):
                         i = random.randrange(3)                                                                                                                                                                                                                                                                      
                         spawn_point = carla.Transform(carla.Location(x * 200. - 800., y * 200. - 800., 3.0), carla.Rotation(0, 0, 0))
-                        actor = world.spawn_actor(blueprints[task], spawn_point)
+                        actor = world.spawn_actor(blueprints[task_v], spawn_point)
                         vehicles_list.append(actor)
 
                         
@@ -111,6 +112,7 @@ try:
                     a = actor.get_acceleration()
                     tr = actor.get_transform()
                     yaw = tr.rotation.yaw * -0.017453293
+
                     yawsin = np.sin(yaw)
                     yawcos = np.cos(yaw)
                     vx, vy = rotate(v.x, v.y, yawsin, yawcos)
@@ -126,18 +128,19 @@ try:
                                 desired_num = env_num
                             if desired_num > 0:
                                 latent = np.random.normal(size=(desired_num, latent_body_len))
-                                goal = learner.get_goal(latent, True) * 1.25
+                                goal = learner.get_goal_batch(latent, True) * 1.25
                                 if desired_num != env_num:
                                     goal = np.concatenate([goal, 
                                         np.array([[[4., 0.], [8., 0.], [12., 0.], [16., 0.], [20., 0.]] for _ in range(env_num - desired_num)])])
                             else:
                                 goal = np.array([[[4., 0.], [8., 0.], [12., 0.], [16., 0.], [20., 0.]] for _ in range(env_num)])
+                            goal_swapped = np.array(np.swapaxes(goal,0,1))
                         state_traj = [[] for _ in range(env_num)]
                         body_traj = [[] for _ in range(env_num)]
                         goal_traj = [[] for _ in range(env_num)]
+
                         action_traj = [[] for _ in range(env_num)]
                         current_goal = [goal[i][0] for i in range(env_num)]
-                        prevscore =  [0. for _ in range(env_num)]
 
                         first_traj_pos = []
                         first_traj_yaw = []
@@ -145,8 +148,10 @@ try:
                             tr = actor.get_transform()
                             first_traj_pos.append([tr.location.x, tr.location.y])
                             first_traj_yaw.append([np.sin(tr.rotation.yaw * -0.017453293), np.cos(tr.rotation.yaw * -0.017453293)])  
+                    if step % traj_track_len == 0:
+                        current_goal = goal_swapped[(step % traj_len) // traj_track_len]
+                        current_goal_rel = current_goal.copy()
 
-                    goal_list = []
                     actions = explorer[task].get_action(states, current_goal, False)
 
                     vehiclecontrols = []
@@ -159,15 +164,38 @@ try:
                         v = actor.get_velocity()
                         vs = np.sqrt(v.x * v.x + v.y * v.y)
                         control = carla.VehicleControl()
-                        control.fl=float(actions[i][0] * (0.0 if task == 1 else 200.0))
-                        control.fr=float(actions[i][1] * (0.0 if task == 2 else 200.0))
-                        control.bl=float(actions[i][2] * (0.0 if task == 3 else 200.0))
-                        control.br=float(actions[i][3] * (0.0 if task == 4 else 200.0))
-                        control.gear = 1
-                        control.manual_gear_shift = True
+                        control.steer = float(actions[i][0])
+                        if actions[i][1] > 0.:
+                            control.throttle = float(actions[i][1])
+                            control.brake = 0.
+                        else:
+                            control.throttle = 0.
+                            control.brake = -(float(actions[i][1]) * 0.7)
+                        control.manual_gear_shift = False
                         control.hand_brake = False
                         control.reverse = False
+                        control.gear = 0
                         
+                        if task_t == 1:
+                            control.steer /= 1.414213
+                            torque = carla.Vector3D(0.0, 0.0, 2e8 * vs)
+                            vehiclecontrols.append(carla.command.ApplyTorque(actor, torque))
+                            vehiclecontrols.append(carla.command.ApplyImpulse(actor, v * -4))
+                        elif task_t == 2:
+                            control.steer /= 1.414213
+                            torque = carla.Vector3D(0.0, 0.0, -2e8 * vs)
+                            vehiclecontrols.append(carla.command.ApplyTorque(actor, torque))
+                            vehiclecontrols.append(carla.command.ApplyImpulse(actor, v * -4))
+                        elif task_t == 3:
+                            control.throttle /= 1.414213
+                            torque = carla.Vector3D(0.0, 0.0, 2e8 * vs + 1e9 * control.throttle)
+                            vehiclecontrols.append(carla.command.ApplyTorque(actor, torque))
+                            vehiclecontrols.append(carla.command.ApplyImpulse(actor, v * -4))
+                        elif task_t == 4:
+                            control.throttle /= 1.414213
+                            torque = carla.Vector3D(0.0, 0.0, -2e8 * vs + -1e9 * control.throttle)
+                            vehiclecontrols.append(carla.command.ApplyTorque(actor, torque))
+                            vehiclecontrols.append(carla.command.ApplyImpulse(actor, v * -4))
                         vehiclecontrols.append(carla.command.ApplyVehicleControl(actor, control))
 
                     client.apply_batch(vehiclecontrols)
@@ -251,6 +279,7 @@ try:
                             survive_dic = [history_policy[task][x][5] for x in dic]
 
                             explorer[task].optimize(state_dic, nextstate_dic, action_dic, goal_dic, reward_dic, survive_dic, exp)
+               
                 for task in range(task_num):
                     explorer[task].network_intermediate_update()
                     
