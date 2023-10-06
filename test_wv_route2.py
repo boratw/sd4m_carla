@@ -72,22 +72,32 @@ def get_state(i, actor):
     a = actor.get_acceleration()
     tr = actor.get_transform()
     yaw = tr.rotation.yaw * -0.017453293
+    yawsin = np.sin(yaw)
+    yawcos = np.cos(yaw)
     f = tr.get_forward_vector()
-    px, py = rotate(tr.location.x - first_traj_pos[i][0], tr.location.y - first_traj_pos[i][1], first_traj_yaw[i][0], first_traj_yaw[i][1])
-    vx, vy = rotate(v.x, v.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
-    ax, ay = rotate(a.x, a.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
-    fx, fy = rotate(f.x, f.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
-    return [1., px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch]
+    vx, vy = rotate(v.x, v.y, yawsin, yawcos)
+    ax, ay = rotate(a.x, a.y, yawsin, yawcos)
+    fx, fy = rotate(f.x, f.y, yawsin, yawcos)
+    if controller < 3:
+        return [25., 0., 0., vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch]
+    else:
+        return [5., 0., 0., vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch]
+
 
 def get_control(actor, action, control):
     if controller < 3:
         action = np.tanh(action)
-    wl = (action[0] + action[2]) / 2.
-    wr = (action[1] + action[3]) / 2.
-    control.fl=float(wl * ratio_fl)
-    control.fr=float(wr * ratio_fr)
-    control.bl=float(wl * ratio_rl)
-    control.br=float(wr * ratio_rr)
+        control.fl=float(action[0] * ratio_fl)
+        control.fr=float(action[1] * ratio_fr)
+        control.bl=float(action[2] * ratio_rl)
+        control.br=float(action[3] * ratio_rr)
+    else:
+        wl = (action[0] + action[2]) / 2.
+        wr = (action[1] + action[3]) / 2.
+        control.fl=float(wl * ratio_fl)
+        control.fr=float(wr * ratio_fr)
+        control.bl=float(wl * ratio_rl)
+        control.br=float(wr * ratio_rr)
     control.gear = 1
     control.manual_gear_shift = True
     control.hand_brake = False
@@ -151,7 +161,7 @@ try:
 
             env_num = 25
             for route_it, route in enumerate([route_straight, route_leftturn, route_rightturn, route_uturn]): 
-                for controller in range(3, 5):
+                for controller in range(5):
                     log_pos = [[] for _ in range(env_num)]
                     log_vel = [[] for _ in range(env_num)]
                     log_distance = [[] for _ in range(env_num)]
@@ -168,16 +178,12 @@ try:
                         world.tick()
 
                     first_pos = []
-                    first_traj_pos = []
-                    first_traj_yaw = []
                     states = []
                     action_latent = []
                     goals = []
                     for i, actor in enumerate(vehicles_list):
                         tr = actor.get_transform()
                         first_pos.append([tr.location.x, tr.location.y])
-                        first_traj_pos.append([tr.location.x, tr.location.y])
-                        first_traj_yaw.append([np.sin(tr.rotation.yaw * -0.017453293), np.cos(tr.rotation.yaw * -0.017453293)])
                         states.append(get_state(i, actor))
                         if controller == 3:
                             action_latent.append([1.5, -0.8, -1.1])
@@ -202,57 +208,47 @@ try:
                         client.apply_batch(vehiclecontrols)
                         world.tick()
                         
-                        if step % traj_track_len == 0:
-                            first_traj_pos = []
-                            first_traj_yaw = []
-                            target_pos = []
-                            goals = []
-                            action_latent = []
-                            for i, actor in enumerate(vehicles_list):
-                                tr = actor.get_transform()
-                                f = tr.get_forward_vector()
-                                px, py = tr.location.x - first_pos[i][0], tr.location.y - first_pos[i][1]
-                                tx, ty = px + f.x * 5.0, py + f.y * 5.0
-                                dx1, dy1 = route[route_target_iter[i]][0], route[route_target_iter[i]][1]
-                                if route_target_iter[i] != len(route) - 1:
-                                    dx2, dy2 = route[route_target_iter[i] + 1][0], route[route_target_iter[i] + 1][1]
-                                    if i == 0:
-                                        print(px, py, dx1, dy1, dx2, dy2)
-                                    if ((tx - dx1) ** 2 + (ty - dy1) ** 2) > ((tx - dx2) ** 2 + (ty - dy2) ** 2):
-                                        route_target_iter[i] += 1
-                                        dx1, dy1 = dx2, dy2
-                                    yaw = tr.rotation.yaw * -0.017453293
-                                    yawsin = np.sin(yaw)
-                                    yawcos = np.cos(yaw)
-                                    dx, dy = rotate(dx1 - px, dy1 - py, yawsin, yawcos)
-                                    if controller < 3:
-                                        d = np.sqrt(dx ** 2 + dy ** 2) / 2.
-                                        target_pos.append([dx / d, dy / d])
-                                    else:
-                                        steer = int(np.round(dy * 10 / dx))
-                                        if steer < -10:
-                                            steer = -10
-                                        elif steer > 10:
-                                            steer = 10
-                                        if controller == 3:
-                                            action_latent.append([latent_task[steer + 10][0], latent_task[steer + 10][1], -1.1])
-                                        else:
-                                            action_latent.append([latent_task[steer + 10][0], latent_task[steer + 10][1], maxlatent[task]])
-                                else:
-                                    if controller < 3:
-                                        target_pos.append([0.0, 0.0])
-                                    elif controller == 3:
-                                        action_latent.append([-2.0, 1.6, -1.1])
-                                    else:
-                                        action_latent.append([-2.0, 1.6,  maxlatent[task]])
-                                first_traj_pos.append([tr.location.x, tr.location.y])
-                                first_traj_yaw.append([np.sin(tr.rotation.yaw * -0.017453293), np.cos(tr.rotation.yaw * -0.017453293)])
-
-
-
+                        goals = []
+                        action_latent = []
                         for i, actor in enumerate(vehicles_list):
                             tr = actor.get_transform()
+                            f = tr.get_forward_vector()
                             v = actor.get_velocity()
+                            px, py = tr.location.x - first_pos[i][0], tr.location.y - first_pos[i][1]
+                            tx, ty = px + f.x * 5.0, py + f.y * 5.0
+                            dx1, dy1 = route[route_target_iter[i]][0], route[route_target_iter[i]][1]
+                            if route_target_iter[i] != len(route) - 1:
+                                dx2, dy2 = route[route_target_iter[i] + 1][0], route[route_target_iter[i] + 1][1]
+                                if i == 0:
+                                    print(px, py, dx1, dy1, dx2, dy2)
+                                if ((tx - dx1) ** 2 + (ty - dy1) ** 2) > ((tx - dx2) ** 2 + (ty - dy2) ** 2):
+                                    route_target_iter[i] += 1
+                                    dx1, dy1 = dx2, dy2
+                                yaw = tr.rotation.yaw * -0.017453293
+                                yawsin = np.sin(yaw)
+                                yawcos = np.cos(yaw)
+                                dx, dy = rotate(dx1 - px, dy1 - py, yawsin, yawcos)
+                                if controller < 3:
+                                    d = np.sqrt(dx ** 2 + dy ** 2) / 2.
+                                    goals.append([dx / d, dy / d])
+                                else:
+                                    steer = int(np.round(dy * 10 / dx))
+                                    if steer < -10:
+                                        steer = -10
+                                    elif steer > 10:
+                                        steer = 10
+                                    if controller == 3:
+                                        action_latent.append([latent_task[steer + 10][0], latent_task[steer + 10][1], -1.1])
+                                    else:
+                                        action_latent.append([latent_task[steer + 10][0], latent_task[steer + 10][1], maxlatent[task]])
+                            else:
+                                if controller < 3:
+                                    goals.append([0.0, 0.0])
+                                elif controller == 3:
+                                    action_latent.append([-2.0, 1.6, -1.1])
+                                else:
+                                    action_latent.append([-2.0, 1.6,  maxlatent[task]])
+
                             if route_current_iter[i] != len(route) - 1:
                                 dx1, dy1 = route[route_current_iter[i]][0], route[route_current_iter[i]][1]
                                 dx2, dy2 = route[route_current_iter[i] + 1][0], route[route_current_iter[i] + 1][1]
@@ -269,12 +265,9 @@ try:
 
 
                         states = []
-                        goals = []
                         for i, actor in enumerate(vehicles_list):
                             state = get_state(i, actor)
                             states.append(state)
-                            if controller < 3:
-                                goals.append([state[1] + target_pos[i][0], state[2] + target_pos[i][1]])
 
                     with open(log_name + "task_" + str(task) + "_control_" + str(controller) + "_route_" + str(route_it) + ".json", 'w') as f:
                         json.dump({"pos" : log_pos, "vel" : log_vel, "distance" : log_distance, "routeit" : log_routeit,

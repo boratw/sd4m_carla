@@ -32,7 +32,7 @@ client.set_timeout(10.0)
 
 agent_num = 150
 
-state_len = 11
+state_len = 10
 action_len = 2
 goal_len = 2
 traj_len = 50
@@ -85,7 +85,7 @@ try:
         blueprints = [bp_library.find("vehicle.mini.cooper_s"),
                     bp_library.find("vehicle.lincoln.mkz_2017"),
                     bp_library.find("vehicle.volkswagen.t2")]
-        for exp in range(1, 1001):
+        for exp in range(1, 2001):
             cur_move = [0.] * task_num
             cur_reward = [0.] * task_num
             for task in range(task_num):
@@ -117,7 +117,7 @@ try:
                     yawcos = np.cos(yaw)
                     vx, vy = rotate(v.x, v.y, yawsin, yawcos)
                     ax, ay = rotate(a.x, a.y, yawsin, yawcos)
-                    states.append([0., 0., 0., vx, vy, ax, ay, 1., 0., tr.rotation.roll, tr.rotation.pitch])
+                    states.append([0., 0., 0., vx, vy, ax, ay, 1., 0., 0.])
                 print( len(history_learner[task]))
                 for step in range(500):
                     
@@ -128,7 +128,7 @@ try:
                                 desired_num = env_num
                             if desired_num > 0:
                                 latent = np.random.normal(size=(desired_num, latent_body_len))
-                                goal = learner.get_goal_batch(latent, True) * 1.25
+                                goal = learner.get_goal(latent, True) * 1.25
                                 if desired_num != env_num:
                                     goal = np.concatenate([goal, 
                                         np.array([[[4., 0.], [8., 0.], [12., 0.], [16., 0.], [20., 0.]] for _ in range(env_num - desired_num)])])
@@ -160,6 +160,8 @@ try:
                         dropout = random.randrange(20)
                         if dropout < action_len:
                             actions[i][dropout] = np.tanh(actions[i][dropout] + np.random.normal(0., 0.5))
+                        elif i == 0 and exp < 100:
+                            actions[i][1] = np.tanh(actions[i][1] + 1.)
 
                         v = actor.get_velocity()
                         vs = np.sqrt(v.x * v.x + v.y * v.y)
@@ -174,7 +176,6 @@ try:
                         control.manual_gear_shift = False
                         control.hand_brake = False
                         control.reverse = False
-                        control.gear = 0
                         
                         if task_t == 1:
                             control.steer /= 1.414213
@@ -213,7 +214,8 @@ try:
                         vx, vy = rotate(v.x, v.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
                         ax, ay = rotate(a.x, a.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
                         fx, fy = rotate(f.x, f.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
-                        nextstates.append([float(step % traj_len), px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch])
+                        vc = actor.get_control()
+                        nextstates.append([float(step % traj_len), px, py, vx, vy, ax, ay, fx, fy, float(vc.gear)])
 
                         prevscore = np.sqrt((current_goal[i][0] - states[i][1]) ** 2 + (current_goal[i][1] - states[i][2]) ** 2)
                         score = np.sqrt((current_goal[i][0] - px) ** 2 + (current_goal[i][1] - py) ** 2)

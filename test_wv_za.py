@@ -67,7 +67,7 @@ def get_state(i, actor):
     vx, vy = rotate(v.x, v.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
     ax, ay = rotate(a.x, a.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
     fx, fy = rotate(f.x, f.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
-    return [float(step % traj_track_len), px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch]
+    return [float(step % traj_len), px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch]
 
 def get_control(actor, action):
     control = carla.VehicleControl()
@@ -89,8 +89,6 @@ log_name = "test_log/Train2_1/"
 log_latent_file = open(log_name + "latent.txt", "wt")
 log_traj_file = open(log_name + "traj.txt", "wt")
 traj_map = np.full((1024, 1024, 3), 255, np.uint8)
-
-maxlatent = [0.95, -2.0, 1.75, 1.4, 0.25, 2.45, 0.4, ]
 
 try:
     with sess.as_default():
@@ -140,120 +138,68 @@ try:
             elif task == 6 or task == 10:
                 ratio_rr = 0.
 
-            vehicles_list = []
 
-            env_num = 100
-            for za in [0.95, -2.0, 1.75, maxlatent[task]]:
-                traj_task_map = np.full((1024, 1024, 3), 255, np.uint8)
-                log_traj_task_file = open(log_name + "traj_task_%d_%.2f.txt" % (task, za), "wt")
-                for zt_x_a, zt_y_a in itertools.product([-2., 0.], [-2., 0.]):
-                    vehicles_list = []
-                    latent = []
+            #Finding Latent
+            maxlatent = 0
+            maxscore = -9999
+            with open(log_name + "task_" + str(task) + "_score.txt", 'w') as f:
+                for za in [-10.0, -7.5, -5., -2.5, 0., 2.5, 5., 7.5]:
+                    env_num = 100
                     action_latent = []
+                    vehicles_list = []
                     for x, y in itertools.product(range(10), range(10)):                                                                                                                                                                                                                           
-                        spawn_point = carla.Transform(carla.Location(x * 200. - 800., y * 200. - 800., 3.0), carla.Rotation(0, 0, 0))
+                        spawn_point = carla.Transform(carla.Location(x * 200. - 1000., y * 200. - 1000., 3.0), carla.Rotation(0, 0, 0))
                         actor = world.spawn_actor(blueprints[task], spawn_point)
                         vehicles_list.append(actor)
-
-                        latent.append([zt_x_a + (x // 2) * 0.4, zt_y_a + (y // 2) * 0.4])
-                        action_latent.append([zt_x_a + (x // 2) * 0.4, zt_y_a + (y // 2) * 0.4, za])
-                    
-                    if task == 0 and za == 2.52:
-                        goal = learner.get_goal(latent, True) * 1.25
-                        goal_traj = np.zeros((env_num, traj_len // traj_track_len + 1, 2), np.float32)
-                        goal_traj[:, 1:] = goal
-                        for x, y in itertools.product(range(0, 10, 2), range(0, 10, 2)):
-                            i = x + y * 10
-                            traj_map_ind = np.full((1024, 1024, 3), 0, np.uint8)
-                            r = np.array([(goal_traj[i] + goal_traj[i + 1] + goal_traj[i + 10] + goal_traj[i + 11]) * 10. + 512.], np.int32)
-                            cv2.polylines(traj_map, r, False, GetColor(latent[i][0], latent[i][1]))
-                            cv2.polylines(traj_map_ind, r, False, (255, 255, 255))
-                            cv2.imwrite(log_name + "traj_map_%.2f_%.2f.png" % (latent[i][0], latent[i][1]), traj_map_ind)
-
-                            log_traj_file.write(str(latent[i][0]) + "\t" + str(latent[i][1]))
-                            for g in goal[i]:
-                                log_traj_file.write("\t" + str(g[0]) + "\t" + str(g[1]))
-                            log_traj_file.write("\n")
-                            log_traj_file.flush()
-                        cv2.imwrite(log_name + "traj_map.png", traj_map)
-                    
-
+                        action_latent.append([0.3, -0.3, za + (x // 2) * 0.1 + (y // 2) * 0.5])
                     for step in range(30):
                         world.tick()
-
-                    states = []
+                    first_pos = []
                     first_traj_pos = []
                     first_traj_yaw = []
-                    traj_pos = np.zeros((env_num, traj_len // traj_track_len + 1, 2), np.float32)
-                    for actor in vehicles_list:
-                        v = actor.get_velocity()
-                        a = actor.get_acceleration()
+                    states = []
+                    for i, actor in enumerate(vehicles_list):
                         tr = actor.get_transform()
-                        yaw = tr.rotation.yaw * -0.017453293
-                        yawsin = np.sin(yaw)
-                        yawcos = np.cos(yaw)
-                        vx, vy = rotate(v.x, v.y, yawsin, yawcos)
-                        ax, ay = rotate(a.x, a.y, yawsin, yawcos)
-                        states.append([0., 0., 0., vx, vy, ax, ay, 1., 0., tr.rotation.roll, tr.rotation.pitch])
-                    for step in range(traj_len * 5):
+                        first_pos.append([tr.location.x, tr.location.y])
+                        first_traj_pos.append([tr.location.x, tr.location.y])
+                        first_traj_yaw.append([np.sin(tr.rotation.yaw * -0.017453293), np.cos(tr.rotation.yaw * -0.017453293)])
+                        states.append(get_state(i, actor))
+                    for step in range(500):
+                        actions = learner.get_action(states, action_latent, True)
+                        vehiclecontrols = []
+                        for i, actor in enumerate(vehicles_list):
+                            vehiclecontrols.append(get_control(actor, actions[i]))
+                        client.apply_batch(vehiclecontrols)
+                        world.tick()
+                        
                         if step % traj_len == 0:
                             first_traj_pos = []
                             first_traj_yaw = []
                             for actor in vehicles_list:
                                 tr = actor.get_transform()
                                 first_traj_pos.append([tr.location.x, tr.location.y])
-                                first_traj_yaw.append([np.sin(tr.rotation.yaw * -0.017453293), np.cos(tr.rotation.yaw * -0.017453293)])  
-
-                        actions = learner.get_action(states, action_latent, True)
-                        vehiclecontrols = []
+                                first_traj_yaw.append([np.sin(tr.rotation.yaw * -0.017453293), np.cos(tr.rotation.yaw * -0.017453293)])
+                        states = []
                         for i, actor in enumerate(vehicles_list):
-                            vehiclecontrols.append(get_control(actor, actions[i]))
-
-                        client.apply_batch(vehiclecontrols)
-                        world.tick()
+                            states.append(get_state(i, actor))
                         
-                        nextstates = []
-                        for i, actor in enumerate(vehicles_list):
-                            tr = actor.get_transform()
-                            v = actor.get_velocity()
-                            a = actor.get_acceleration()
-                            tr = actor.get_transform()
-                            yaw = tr.rotation.yaw * -0.017453293
-                            f = tr.get_forward_vector()
-                            px, py = rotate(tr.location.x - first_traj_pos[i][0], tr.location.y - first_traj_pos[i][1], first_traj_yaw[i][0], first_traj_yaw[i][1])
-                            vx, vy = rotate(v.x, v.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
-                            ax, ay = rotate(a.x, a.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
-                            fx, fy = rotate(f.x, f.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
-                            nextstates.append([float(step % traj_len + 1), px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch])
-
-                            if step % traj_track_len == (traj_track_len - 1):
-                                traj_tack_step = (step % traj_len) // traj_track_len + 1
-                                traj_pos[i][traj_tack_step] += np.array([px, py])
-
-                        states = nextstates
-
-                    traj_pos /= 5
-                    i = 0
                     for x, y in itertools.product(range(0, 10, 2), range(0, 10, 2)):
+                        tx = 0
+                        ty = 0
                         i = x + y * 10
-                        traj_task_map_ind = np.full((1024, 1024, 3), 0, np.uint8)
-                        r = np.array([(traj_pos[i] + traj_pos[i + 1] + traj_pos[i + 10] + traj_pos[i + 11]) * 10. + 512.], np.int32)
-                        cv2.polylines(traj_task_map, r, False, GetColor(latent[i][0], latent[i][1]))
-                        cv2.polylines(traj_task_map_ind, r, False, (255, 255, 255))
-                        cv2.imwrite(log_name + "traj_task_map_%d_%.2f_%.2f_%.2f.png" % (task, za, latent[i][0], latent[i][1]), traj_task_map_ind)
-
-
-                        log_traj_task_file.write(str(latent[i][0]) + "\t" + str(latent[i][1]))
-                        for g in traj_pos[i]:
-                            log_traj_task_file.write("\t" + str(g[0]) + "\t" + str(g[1]))
-                        log_traj_task_file.write("\n")
-                        log_traj_task_file.flush()
-                        i += 1
-
+                        for j in [i, i + 1, i + 10, i + 11]:
+                            tr = vehicles_list[j].get_transform()
+                            tx += (tr.location.x - first_pos[j][0])
+                            ty += (tr.location.y - first_pos[j][1])
+                        score = tx - abs(ty) * 2
+                        if score > maxscore:
+                            maxscore = score
+                            maxlatent = action_latent[i][2]
+                        f.write(str(action_latent[i][2]) + "\t" + str(score) + "\t" + str(tx) + "\t" + str(ty) + "\n")
                     client.apply_batch([carla.command.DestroyActor(x) for x in vehicles_list])
-                    print("Task " + str(task) +  "_" + str(za) + " l1 " +  str(zt_x_a) +  " l2 " +  str(zt_y_a) )
-                cv2.imwrite(log_name + "traj_task_map_%d_%.2f.png" % (task, za), traj_task_map)
-
+                        
+            
+                    print(task, za)
 
 
 

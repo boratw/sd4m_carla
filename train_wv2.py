@@ -86,7 +86,7 @@ try:
                     bp_library.find("vehicle.neubility.delivery_nofr"),
                     bp_library.find("vehicle.neubility.delivery_norl"),
                     bp_library.find("vehicle.neubility.delivery_norr")]
-        for exp in range(1, 1000001):
+        for exp in range(1, 2001):
             cur_move = [0.] * task_num
             cur_reward = [0.] * task_num
             for task in range(task_num):
@@ -152,7 +152,7 @@ try:
                     vehiclecontrols = []
                     for i, actor in enumerate(vehicles_list):
 
-                        dropout = random.randrange(20)
+                        dropout = random.randrange(40)
                         if dropout < action_len:
                             actions[i][dropout] = np.tanh(actions[i][dropout] + np.random.normal(0., 0.5))
 
