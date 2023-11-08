@@ -10,8 +10,10 @@ EPS = 1e-6
 class GaussianDistribution:
     def __init__(self, name, input_dim, output_dim, hidden_sizes, hidden_nonlinearity=tf.nn.relu, reuse=False,
         input_tensor=None, additional_input=False, additional_input_dim=0, additional_input_tensor=None, random_batch=None, 
-        traj_dim=None, sig_clip_min=-10.0,sig_clip_max=2.0, input_dropout=None ):
+        traj_dim=None, sig_clip_min=-10.0,sig_clip_max=2.0, input_dropout=None, output_tanh=False ):
         self.random_batch = random_batch
+        self.output_tanh = output_tanh
+        self.output_len = output_dim
         with tf.variable_scope(name, reuse=reuse):
 
             if input_tensor is None:
@@ -113,8 +115,16 @@ class GaussianDistribution:
 
             self.dist = tf.distributions.Normal(loc=self.mu, scale=tf.exp(self.logsig))
             self.prior = tf.distributions.Normal(loc=tf.zeros_like(self.mu), scale=tf.ones_like(self.logsig))
-            self.reparameterized = self.dist.sample()
-            self.log_pi = tf.reduce_sum(self.dist.log_prob(self.reparameterized), axis=1)
+            self.x = self.dist.sample()
+            if output_tanh:
+                self.output_discrete = tf.nn.tanh(self.mu)
+                self.reparameterized = tf.nn.tanh(self.x)
+                self.log_pi = (tf.reduce_sum(self.dist.log_prob(self.x), axis=1) - self.squash_correction(self.reparameterized))
+            else:
+                self.output_discrete = self.mu
+                self.reparameterized = self.dist.sample()
+                self.log_pi = tf.reduce_sum(self.dist.log_prob(self.reparameterized), axis=1)
+                
 
 
             if random_batch is not None:
@@ -133,13 +143,16 @@ class GaussianDistribution:
         else:
             logsig = tf.stop_gradient(self.logsig)
         if self.random_batch == None:
-            if clip_mu:
-                d = tf.clip_by_value(self.mu - x, -1, 1)
+            if self.output_tanh:
+                return (tf.reduce_sum(self.dist.log_prob(tf.math.atanh(tf.clip_by_value(action, -0.999, 0.999))), axis=1) - self.squash_correction(action)) / self.output_len  * 2.
             else:
-                d = self.mu - x
-            log_prod = 0.5 * ((d / tf.exp(logsig))  ** 2) + logsig + np.log(np.sqrt(np.pi * 2.))
-            log_prod_sum = tf.reduce_sum(log_prod, axis=1)
-            return log_prod_sum
+                if clip_mu:
+                    d = tf.clip_by_value(self.mu - x, -1, 1)
+                else:
+                    d = self.mu - x
+                log_prod = 0.5 * ((d / tf.exp(logsig))  ** 2) + logsig + np.log(np.sqrt(np.pi * 2.))
+                log_prod_sum = tf.reduce_sum(log_prod, axis=1)
+                return log_prod_sum
         else:
             x = tf.tile(x, [self.random_batch, 1])
             if clip_mu:
@@ -154,6 +167,8 @@ class GaussianDistribution:
 
 
         
+    def squash_correction(self, actions):
+        return tf.reduce_sum(tf.log(1 - actions ** 2 + EPS), axis=1)
  
 
     def build_add_weighted(self, source, weight):

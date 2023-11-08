@@ -115,12 +115,13 @@ class GaussianPolicy:
 
             self.dist = tf.distributions.Normal(loc=self.mu, scale=tf.exp(self.logsig))
             self.prior = tf.distributions.Normal(loc=tf.zeros_like(self.mu), scale=tf.ones_like(self.logsig))
-            self.output_discrete = tf.nn.tanh(self.mu)
+            self.x = self.dist.sample()
             if output_tanh:
-                self.x = self.dist.sample()
+                self.output_discrete = tf.nn.tanh(self.mu)
                 self.reparameterized = tf.nn.tanh(self.x)
                 self.log_pi = (tf.reduce_sum(self.dist.log_prob(self.x), axis=1) - self.squash_correction(self.reparameterized))
             else:
+                self.output_discrete = self.mu
                 self.reparameterized = self.dist.sample()
                 self.log_pi = tf.reduce_sum(self.dist.log_prob(self.reparameterized), axis=1)
 

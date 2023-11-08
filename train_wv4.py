@@ -31,11 +31,11 @@ client.set_timeout(10.0)
 
 agent_num = 150
 
-state_len = 11
+state_len = 10
 action_len = 4
 goal_len = 2
-traj_len = 50
-traj_track_len = 10
+traj_len = 25
+traj_track_len = 5
 latent_len = 3
 latent_body_len = 2
 latent_preserve = 4
@@ -45,7 +45,7 @@ env_num = 64
 learner_batch = 16
 explorer_batch = 64
 
-log_name = "train_log/Train2_2/log_" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+log_name = "train_log/Train3_6/log_" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 log_file = open(log_name + ".txt", "wt")
 
 
@@ -57,7 +57,8 @@ def rotate(posx, posy, yawsin, yawcos):
 
 try:
     with sess.as_default():
-        learner = Skill_Learner(state_len, action_len, goal_len, traj_len, traj_track_len, latent_len, latent_body_len, task_num)
+        learner = Skill_Learner(state_len, action_len, goal_len, traj_len, traj_track_len, latent_len, latent_body_len, task_num, learner_unity=0.01, learner_diverse=0.001,
+            learner_lr=0.0001, sampler_lr=0.0001, sampler_disperse=0.1)
         explorer = [Skill_Explorer(state_len,  action_len, goal_len, name=str(i)) for i in range(task_num)]
         learner_saver = tf.train.Saver(max_to_keep=0, var_list=learner.trainable_dict)
         explorer_savers = [tf.train.Saver(max_to_keep=0, var_list=explorer[i].trainable_dict) for i in range(task_num)]
@@ -81,9 +82,9 @@ try:
         world.apply_settings(settings)
 
         bp_library = world.get_blueprint_library()
-        blueprints = [bp_library.find("vehicle.neubility.delivery"),
-                    bp_library.find("vehicle.neubility.delivery_leftbig"),
-                    bp_library.find("vehicle.neubility.delivery_rightbig")]
+        blueprints = [bp_library.find("vehicle.neubility.delivery4w"),
+                    bp_library.find("vehicle.neubility.delivery4w"),
+                    bp_library.find("vehicle.neubility.delivery4w")]
         for exp in range(1, 2001):
             cur_move = [0.] * task_num
             cur_reward = [0.] * task_num
@@ -99,23 +100,31 @@ try:
                         
                 for step in range(30):
                     world.tick()
+                if task == 0:
+                    ratio_fl = 100.
+                    ratio_fr = 100.
+                    ratio_rl = 100.
+                    ratio_rr = 100.
+                if task == 1:
+                    ratio_fl = 200.
+                    ratio_fr = 50.
+                    ratio_rl = 200.
+                    ratio_rr = 50.
+                if task == 2:
+                    ratio_fl = 50.
+                    ratio_fr = 200.
+                    ratio_rl = 50.
+                    ratio_rr = 200.
 
                 states = []
                 survive_vector = [True for _ in vehicles_list]
+                broken_vector = [0 for _ in vehicles_list]
+                broken_index = [0 for _ in vehicles_list]
+                broken_value = [0.0 for _ in vehicles_list]
                 first_traj_pos = []
                 first_traj_yaw = []
-                for actor in vehicles_list:
-                    v = actor.get_velocity()
-                    a = actor.get_acceleration()
-                    tr = actor.get_transform()
-                    yaw = tr.rotation.yaw * -0.017453293
-                    yawsin = np.sin(yaw)
-                    yawcos = np.cos(yaw)
-                    vx, vy = rotate(v.x, v.y, yawsin, yawcos)
-                    ax, ay = rotate(a.x, a.y, yawsin, yawcos)
-                    states.append([0., 0., 0., vx, vy, ax, ay, 1., 0., tr.rotation.roll, tr.rotation.pitch])
                 print( len(history_learner[task]))
-                for step in range(500):
+                for step in range(1000):
                     
                     if step % traj_len == 0:
                         if (step // traj_len) % latent_preserve == 0:
@@ -124,7 +133,6 @@ try:
                                 desired_num = env_num
                             if desired_num > 0:
                                 latent = np.random.normal(size=(desired_num, latent_body_len))
-                                goal = learner.get_goal(latent, True) * 1.25
                                 if desired_num != env_num:
                                     goal = np.concatenate([goal, 
                                         np.array([[[4., 0.], [8., 0.], [12., 0.], [16., 0.], [20., 0.]] for _ in range(env_num - desired_num)])])
@@ -139,8 +147,17 @@ try:
 
                         first_traj_pos = []
                         first_traj_yaw = []
+                        states = []
                         for actor in vehicles_list:
                             tr = actor.get_transform()
+                            v = actor.get_velocity()
+                            a = actor.get_acceleration()
+                            yaw = tr.rotation.yaw * -0.017453293
+                            yawsin = np.sin(yaw)
+                            yawcos = np.cos(yaw)
+                            vx, vy = rotate(v.x, v.y, yawsin, yawcos)
+                            ax, ay = rotate(a.x, a.y, yawsin, yawcos)
+                            states.append([0., 0., vx, vy, ax, ay, 1., 0., tr.rotation.roll, tr.rotation.pitch])
                             first_traj_pos.append([tr.location.x, tr.location.y])
                             first_traj_yaw.append([np.sin(tr.rotation.yaw * -0.017453293), np.cos(tr.rotation.yaw * -0.017453293)])  
 
@@ -150,17 +167,21 @@ try:
                     vehiclecontrols = []
                     for i, actor in enumerate(vehicles_list):
 
-                        dropout = random.randrange(40)
-                        if dropout < action_len:
-                            actions[i][dropout] = np.tanh(actions[i][dropout] + np.random.normal(0., 0.5))
+                        if broken_vector[i] == 0:
+                            if random.random() < 0.005:
+                                broken_vector[i] = 10
+                                broken_index[i] = random.randrange(4)
+                                broken_value[i] = random.random() * 0.5 - 0.2
+                        else:  
+                            broken_vector[i] -= 1
+                            actions[i][broken_index[i]] = broken_value[i]
 
-                        v = actor.get_velocity()
-                        vs = np.sqrt(v.x * v.x + v.y * v.y)
+                            
                         control = carla.VehicleControl()
-                        control.fl=float(actions[i][0] * (300.0 if task == 1 else 200.0))
-                        control.fr=float(actions[i][1] * (300.0 if task == 2 else 200.0))
-                        control.bl=float(actions[i][2] * (300.0 if task == 1 else 200.0))
-                        control.br=float(actions[i][3] * (300.0 if task == 2 else 200.0))
+                        control.fl=float(actions[i][0] * ratio_fl)
+                        control.fr=float(actions[i][1] * ratio_fr)
+                        control.bl=float(actions[i][2] * ratio_rl)
+                        control.br=float(actions[i][3] * ratio_rr)
                         control.gear = 1
                         control.manual_gear_shift = True
                         control.hand_brake = False
@@ -183,32 +204,31 @@ try:
                         vx, vy = rotate(v.x, v.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
                         ax, ay = rotate(a.x, a.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
                         fx, fy = rotate(f.x, f.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
-                        nextstates.append([float(step % traj_len), px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch])
+                        nextstates.append([px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch])
 
-                        prevscore = np.sqrt((current_goal[i][0] - states[i][1]) ** 2 + (current_goal[i][1] - states[i][2]) ** 2)
-                        score = np.sqrt((current_goal[i][0] - px) ** 2 + (current_goal[i][1] - py) ** 2)
-                        reward = 0.1 - (abs(actions[i][0] - actions[i][2]) + abs(actions[i][1] - actions[i][3])) * 0.1
-                        survive = (abs(tr.rotation.roll) < 45) and (abs(tr.rotation.pitch) < 45)
+                        prevscore = np.sqrt((current_goal[i][0] - states[i][0]) ** 2 + (current_goal[i][1] - states[i][1]) ** 2)
+                        score = prevscore - np.sqrt((current_goal[i][0] - px) ** 2 + (current_goal[i][1] - py) ** 2)
+                        cur_reward[task] += score
+                        velocity = np.sqrt(v.x ** 2 + v.y ** 2)
+                        reward = 0.05 - ((actions[i][0] - actions[i][2]) ** 2 + (actions[i][1] - actions[i][3]) ** 2) * 0.1 - (velocity * 0.1 - 2.0 if velocity > 20. else 0.)
+                        survive = (abs(tr.rotation.roll) < 10) and (abs(tr.rotation.pitch) < 10)
                         if survive_vector[i] :
                             if survive:
-                                history_policy[task].append([states[i], nextstates[i][:], actions[i], current_goal[i], [(prevscore - score) * 10. + reward], [1.]])
+                                history_policy[task].append([states[i], nextstates[i][:], actions[i], current_goal[i], [score * 2. + reward], [1.]])
                             else:
-                                history_policy[task].append([states[i], nextstates[i][:], actions[i], current_goal[i], [(prevscore - score) * 10. - 1.], [0.]])
+                                history_policy[task].append([states[i], nextstates[i][:], actions[i], current_goal[i], [-10.], [0.]])
                                 survive_vector[i] = survive
-
 
                         if step % traj_track_len == (traj_track_len - 1):
                             traj_tack_step = (step % traj_len) // traj_track_len
                             if traj_tack_step != (traj_len // traj_track_len - 1):
                                 current_goal[i] = current_goal[i] - goal[i][traj_tack_step] +  goal[i][traj_tack_step + 1]
 
-                        cur_reward[task] += (prevscore - score)
 
                         state_traj[i].append(states[i])
                         action_traj[i].append(actions[i])
                         if step % traj_track_len == traj_track_len - 1:
                             body_traj[i].append(np.array([px, py]))
-                        nextstates[-1][0] += 1.
 
                     states = nextstates
                     if step % traj_len == traj_len - 1:
@@ -270,7 +290,7 @@ try:
             for i in range(task_num):
                 explorer[i].network_update()
 
-            if exp % 50 == 0:
+            if exp % 20 == 0:
                 learner_saver.save(sess, log_name + "_learner_" + str(exp) + ".ckpt")
                 for i in range(task_num):
                     explorer_savers[i].save(sess, log_name + "_explorer" + str(i) + "_" + str(exp) + ".ckpt")

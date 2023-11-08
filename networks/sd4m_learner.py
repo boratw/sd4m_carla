@@ -57,12 +57,13 @@ class Skill_Learner:
                     input_tensor=sampling_latent, input_dropout=self.input_dropout, reuse=True)
 
                 self.learner_decoder_action = GaussianDistribution("learner_decoder_action", latent_len,  action_len, decoder_action_hidden_len, hidden_nonlinearity=vae_hidden_nonlinearity,
-                    input_tensor=self.input_latent, additional_input=True, additional_input_dim=state_len, additional_input_tensor=self.input_state, input_dropout=self.input_dropout)
+                    input_tensor=self.input_latent, additional_input=True, additional_input_dim=state_len, additional_input_tensor=self.input_state, input_dropout=self.input_dropout, output_tanh=True)
                 self.learner_encoded_decoder_action = GaussianDistribution("learner_decoder_action", latent_len, action_len, decoder_action_hidden_len, hidden_nonlinearity=vae_hidden_nonlinearity,
-                    input_tensor=encoded_latent_batched, additional_input=True, additional_input_dim=state_len, additional_input_tensor=state_output_batched, input_dropout=self.input_dropout, reuse=True)
+                    input_tensor=encoded_latent_batched, additional_input=True, additional_input_dim=state_len, additional_input_tensor=state_output_batched, input_dropout=self.input_dropout,
+                    output_tanh=True, reuse=True)
 
                 self.learner_output_discrete_body = tf.reshape(self.learner_decoder_body.mu, [-1, body_len, goal_len])
-                self.learner_output_discrete_action = self.learner_decoder_action.mu
+                self.learner_output_discrete_action = self.learner_decoder_action.output_discrete
                 self.learner_output_stochastic_body = tf.reshape(self.learner_decoder_body.reparameterized, [-1, body_len, goal_len])
                 self.learner_output_stochastic_action = self.learner_decoder_action.reparameterized
 
@@ -114,7 +115,7 @@ class Skill_Learner:
                 self.sampler_optimizer = tf.train.AdamOptimizer(sampler_lr)
                 self.sampler_train = self.sampler_optimizer.minimize(loss = 
                     self.sampler_likelihood + self.sampled_sampler.l2_loss * learner_l2_reg
-                    - self.random_sampler_likelihood * sampler_diverse, #- self.sampler_disperse_loss * sampler_disperse,
+                    - self.random_sampler_likelihood * sampler_diverse - self.sampler_disperse_loss * sampler_disperse,
                     var_list=self.sampler_params)
                     
 
@@ -127,8 +128,8 @@ class Skill_Learner:
                 return x
             self.trainable_dict = {nameremover(var.name, self.name) : var for var in self.trainable_params}
             self.zero_latent_mean = np.zeros((task_num, latent_len - latent_body_len), np.float32)
-            self.zero_latent_body_mean = np.zeros((task_num, latent_body_len), np.float32)
-            self.zero_latent_body_var = np.zeros((task_num, latent_body_len), np.float32)
+            self.zero_latent_body_mean = np.zeros((latent_body_len,), np.float32)
+            self.zero_latent_body_var = np.zeros((latent_body_len,), np.float32)
 
 
     def get_goal(self, input_latent, discrete=False):

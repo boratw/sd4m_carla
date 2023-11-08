@@ -14,7 +14,6 @@ from carla import VehicleLightState as vls
 from carla import TrafficLightState as tls
 import tensorflow.compat.v1 as tf
 
-from networks.sd4m_learner import Skill_Learner
 from networks.sd4m_explorer import Skill_Explorer
 
 import random
@@ -42,14 +41,12 @@ latent_preserve = 4
 task_num = 3
 env_num = 64
 
-learner_batch = 16
 explorer_batch = 64
 
-log_name = "train_log/Train2_2/log_" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+log_name = "train_log/Train2_sac/log_" + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 log_file = open(log_name + ".txt", "wt")
 
 
-history_learner = [[] for _ in range(task_num)]
 history_policy =  [[] for _ in range(task_num)]
 
 def rotate(posx, posy, yawsin, yawcos):
@@ -57,15 +54,12 @@ def rotate(posx, posy, yawsin, yawcos):
 
 try:
     with sess.as_default():
-        learner = Skill_Learner(state_len, action_len, goal_len, traj_len, traj_track_len, latent_len, latent_body_len, task_num)
         explorer = [Skill_Explorer(state_len,  action_len, goal_len, name=str(i)) for i in range(task_num)]
-        learner_saver = tf.train.Saver(max_to_keep=0, var_list=learner.trainable_dict)
         explorer_savers = [tf.train.Saver(max_to_keep=0, var_list=explorer[i].trainable_dict) for i in range(task_num)]
 
         init = tf.global_variables_initializer()
         sess.run(init)
 
-        learner.network_initialize()
         for i in range(task_num):
             explorer[i].network_initialize()
         world = client.get_world()
@@ -114,28 +108,16 @@ try:
                     vx, vy = rotate(v.x, v.y, yawsin, yawcos)
                     ax, ay = rotate(a.x, a.y, yawsin, yawcos)
                     states.append([0., 0., 0., vx, vy, ax, ay, 1., 0., tr.rotation.roll, tr.rotation.pitch])
-                print( len(history_learner[task]))
                 for step in range(500):
                     
                     if step % traj_len == 0:
                         if (step // traj_len) % latent_preserve == 0:
-                            desired_num = len(history_learner[task]) // 128
-                            if desired_num > env_num:
-                                desired_num = env_num
-                            if desired_num > 0:
-                                latent = np.random.normal(size=(desired_num, latent_body_len))
-                                goal = learner.get_goal(latent, True) * 1.25
-                                if desired_num != env_num:
-                                    goal = np.concatenate([goal, 
-                                        np.array([[[4., 0.], [8., 0.], [12., 0.], [16., 0.], [20., 0.]] for _ in range(env_num - desired_num)])])
-                            else:
-                                goal = np.array([[[4., 0.], [8., 0.], [12., 0.], [16., 0.], [20., 0.]] for _ in range(env_num)])
+                            goal_d = np.random.uniform(-1.047197551, 1.047197551, (env_num,))
+                            current_goal = np.array([[np.cos(d) * 0.2, np.sin(d) * 0.2] for d in goal_d])
                         state_traj = [[] for _ in range(env_num)]
                         body_traj = [[] for _ in range(env_num)]
                         goal_traj = [[] for _ in range(env_num)]
                         action_traj = [[] for _ in range(env_num)]
-                        current_goal = [goal[i][0] for i in range(env_num)]
-                        prevscore =  [0. for _ in range(env_num)]
 
                         first_traj_pos = []
                         first_traj_yaw = []
@@ -144,7 +126,6 @@ try:
                             first_traj_pos.append([tr.location.x, tr.location.y])
                             first_traj_yaw.append([np.sin(tr.rotation.yaw * -0.017453293), np.cos(tr.rotation.yaw * -0.017453293)])  
 
-                    goal_list = []
                     actions = explorer[task].get_action(states, current_goal, False)
 
                     vehiclecontrols = []
@@ -185,25 +166,20 @@ try:
                         fx, fy = rotate(f.x, f.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
                         nextstates.append([float(step % traj_len), px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch])
 
-                        prevscore = np.sqrt((current_goal[i][0] - states[i][1]) ** 2 + (current_goal[i][1] - states[i][2]) ** 2)
-                        score = np.sqrt((current_goal[i][0] - px) ** 2 + (current_goal[i][1] - py) ** 2)
+
+                        score = 1. - np.sqrt((current_goal[i][0] - (px- states[i][1])) ** 2 + (current_goal[i][1] - (py - states[i][2])) ** 2) * 2.5
                         reward = 0.1 - (abs(actions[i][0] - actions[i][2]) + abs(actions[i][1] - actions[i][3])) * 0.1
                         survive = (abs(tr.rotation.roll) < 45) and (abs(tr.rotation.pitch) < 45)
                         if survive_vector[i] :
                             if survive:
-                                history_policy[task].append([states[i], nextstates[i][:], actions[i], current_goal[i], [(prevscore - score) * 10. + reward], [1.]])
+                                history_policy[task].append([states[i], nextstates[i][:], actions[i], current_goal[i], [score + reward], [1.]])
                             else:
-                                history_policy[task].append([states[i], nextstates[i][:], actions[i], current_goal[i], [(prevscore - score) * 10. - 1.], [0.]])
+                                history_policy[task].append([states[i], nextstates[i][:], actions[i], current_goal[i], [score - 1.], [0.]])
                                 survive_vector[i] = survive
 
 
-                        if step % traj_track_len == (traj_track_len - 1):
-                            traj_tack_step = (step % traj_len) // traj_track_len
-                            if traj_tack_step != (traj_len // traj_track_len - 1):
-                                current_goal[i] = current_goal[i] - goal[i][traj_tack_step] +  goal[i][traj_tack_step + 1]
-
-                        cur_reward[task] += (prevscore - score)
-
+                        cur_reward[task] += score
+                        
                         state_traj[i].append(states[i])
                         action_traj[i].append(actions[i])
                         if step % traj_track_len == traj_track_len - 1:
@@ -214,8 +190,6 @@ try:
                     if step % traj_len == traj_len - 1:
                         for i, actor in enumerate(vehicles_list):
                             skill_moved = np.sqrt(body_traj[i][-1][0] ** 2 + body_traj[i][-1][1] ** 2)
-                            if skill_moved > 1. and survive_vector[i]:
-                                history_learner[task].append([state_traj[i], body_traj[i], action_traj[i]])
                             cur_move[task] += skill_moved
              
                 client.apply_batch([carla.command.DestroyActor(x) for x in vehicles_list])
@@ -223,19 +197,6 @@ try:
                 cur_reward[task] /= env_num
                 print("Episode " + str(exp) + " Task " + str(task) +  " Move " +  str(cur_move[task] ) +  " Reward " +  str(cur_reward[task]) )
 
-            train_learner = True
-            for task in range(task_num):
-                if len(history_learner[task]) < learner_batch * 8:
-                    train_learner = False
-            if train_learner:
-                for iter in range(256):
-                    dic = [random.sample(range(len(history_learner[task])), learner_batch) for task in range(task_num)]
-
-                    state_dic = np.concatenate([[history_learner[task][x][0] for x in dic[task]] for task in range(task_num)])
-                    body_dic = np.concatenate([[history_learner[task][x][1] for x in dic[task]] for task in range(task_num)])
-                    action_dic = np.concatenate([[history_learner[task][x][2] for x in dic[task]] for task in range(task_num)])
-
-                    learner.optimize(state_dic, body_dic, action_dic)
             for iter in range(16):
                 for iter2 in range(32):
                     for task in range(task_num):
@@ -253,30 +214,25 @@ try:
                 for task in range(task_num):
                     explorer[task].network_intermediate_update()
                     
-            learner.log_print()
             for i in range(task_num):
                 explorer[i].log_print()
 
             log_file.write(str(exp) + "\t")
             for i in range(task_num):
                 log_file.write(str(cur_move[i])  + "\t" + str(cur_reward[i]) + "\t")
-            log_file.write(learner.current_log())
             for i in range(task_num):
                 log_file.write(explorer[i].current_log())
             log_file.write("\n")
             log_file.flush()
 
-            learner.network_update()
             for i in range(task_num):
                 explorer[i].network_update()
 
             if exp % 50 == 0:
-                learner_saver.save(sess, log_name + "_learner_" + str(exp) + ".ckpt")
                 for i in range(task_num):
                     explorer_savers[i].save(sess, log_name + "_explorer" + str(i) + "_" + str(exp) + ".ckpt")
 
             for task in range(task_num):
-                history_learner[task] = history_learner[task][(len(history_learner[task]) // 32):]
                 history_policy[task] = history_policy[task][(len(history_policy[task] ) // 32):]
 
 

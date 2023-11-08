@@ -32,7 +32,7 @@ client.set_timeout(10.0)
 
 agent_num = 150
 
-state_len = 11
+state_len = 10
 action_len = 4
 goal_len = 2
 traj_len = 50
@@ -46,8 +46,8 @@ env_num = 64
 learner_batch = 16
 
 def GetColor(z1, z2):
-    z1 = z1 / 2.0
-    z2 = z2 / 2.0
+    z1 = z1 / 4.0
+    z2 = z2 / 4.0
     color =  ( int( np.clip((0.5 + 1.28  * z2) * 255, 0, 255 ) ),
                 int( np.clip((0.5 -  0.214 * z1 - 0.380 * z2) * 255, 0, 255 )),
                 int( np.clip((0.5 + 2.128 * z1) * 255, 0, 255) ))
@@ -71,26 +71,22 @@ def get_state(i, actor):
 
 def get_control(actor, action):
     control = carla.VehicleControl()
-    wl = (action[0] + action[2]) / 2.
-    wr = (action[1] + action[3]) / 2.
-    
-
-    control.fl=float(wl * ratio_fl)
-    control.fr=float(wr * ratio_fr)
-    control.bl=float(wl * ratio_rl)
-    control.br=float(wr * ratio_rr)
+    control.fl=float(action[0] * ratio_fl)
+    control.fr=float(action[1] * ratio_fr)
+    control.bl=float(action[2] * ratio_rl)
+    control.br=float(action[3] * ratio_rr)
     control.gear = 1
     control.manual_gear_shift = True
     control.hand_brake = False
     control.reverse = False
     return carla.command.ApplyVehicleControl(actor, control)
 
-log_name = "test_log/Train2_1/"
+log_name = "test_log/Train3_2_2/"
 log_latent_file = open(log_name + "latent.txt", "wt")
 log_traj_file = open(log_name + "traj.txt", "wt")
 traj_map = np.full((1024, 1024, 3), 255, np.uint8)
 
-maxlatent = [0.95, -2.0, 1.75, 1.4, 0.25, 2.45, 0.4, ]
+maxlatent = [0.24, 0.04, -2.04, -1.28, 0.32, -3.52, 0.4, -1.84, 0.44, -7.2, 8.5]
 
 try:
     with sess.as_default():
@@ -104,23 +100,14 @@ try:
         world.apply_settings(settings)
 
         bp_library = world.get_blueprint_library()
-        blueprints = [bp_library.find("vehicle.neubility.delivery"),
-                    bp_library.find("vehicle.neubility.delivery_leftbig"),
-                    bp_library.find("vehicle.neubility.delivery_rightbig"),
-                    bp_library.find("vehicle.neubility.delivery"),
-                    bp_library.find("vehicle.neubility.delivery"),
-                    bp_library.find("vehicle.neubility.delivery"),
-                    bp_library.find("vehicle.neubility.delivery"),
-                    bp_library.find("vehicle.neubility.delivery_nofl"),
-                    bp_library.find("vehicle.neubility.delivery_nofr"),
-                    bp_library.find("vehicle.neubility.delivery_norl"),
-                    bp_library.find("vehicle.neubility.delivery_norr")]
+        blueprints = [bp_library.find("vehicle.neubility.delivery4w"),
+                    bp_library.find("vehicle.neubility.delivery4w"),
+                    bp_library.find("vehicle.neubility.delivery4w")]
 
         learner = Skill_Learner(state_len, action_len, goal_len, traj_len, traj_track_len, latent_len, latent_body_len, task_num)
         learner_saver = tf.train.Saver(max_to_keep=0, var_list=learner.trainable_dict)
-        learner_saver.restore(sess, "train_log/Train2_1/log_2023-09-26-16-30-57_learner_250.ckpt")
-
-        for task in range(11):
+        learner_saver.restore(sess, "train_log/Train3_2/log_2023-10-14-01-18-22_learner_1500.ckpt")
+        for task in range(9):
             ratio_fl = 200.
             ratio_fr = 200.
             ratio_rl = 200.
@@ -131,53 +118,65 @@ try:
             elif task == 2:
                 ratio_fr = 300.
                 ratio_rr = 300.
-            elif task == 3 or task == 7:
+            elif task == 3:
+                ratio_fl = -50.
+            elif task == 4:
+                ratio_fr = -50.
+            elif task == 5:
+                ratio_rl = -50.
+            elif task == 6:
+                ratio_rr = -50.
+            elif task == 7:
                 ratio_fl = 0.
-            elif task == 4 or task == 8:
+            elif task == 8:
                 ratio_fr = 0.
-            elif task == 5 or task == 9:
-                ratio_rl = 0.
-            elif task == 6 or task == 10:
-                ratio_rr = 0.
+            elif task == 9:
+                ratio_fl = 0.
+            elif task == 10:
+                ratio_fr = 0.
 
             vehicles_list = []
 
             env_num = 100
-            for za in [0.95, -2.0, 1.75, maxlatent[task]]:
+            for za in [0.24, -2.4, 1.8, maxlatent[task]]:
                 traj_task_map = np.full((1024, 1024, 3), 255, np.uint8)
                 log_traj_task_file = open(log_name + "traj_task_%d_%.2f.txt" % (task, za), "wt")
-                for zt_x_a, zt_y_a in itertools.product([-2., 0.], [-2., 0.]):
+                for zt_x_a, zt_y_a in itertools.product([-4., -3.5, -3., -2.5, -2., -1.5, -1., -0.5, 0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5],
+                    [-4., -3.5, -3., -2.5, -2., -1.5, -1., -0.5, 0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5]):
                     vehicles_list = []
                     latent = []
                     action_latent = []
-                    for x, y in itertools.product(range(10), range(10)):                                                                                                                                                                                                                           
-                        spawn_point = carla.Transform(carla.Location(x * 200. - 800., y * 200. - 800., 3.0), carla.Rotation(0, 0, 0))
-                        actor = world.spawn_actor(blueprints[task], spawn_point)
-                        vehicles_list.append(actor)
+                    for x, y in itertools.product(range(10), range(10)):  
+                                                                                                                                                                                                               
+                        #spawn_point = carla.Transform(carla.Location(x * 200. - 800., y * 200. - 800., 3.0), carla.Rotation(0, 0, 0))
+                        #actor = world.spawn_actor(blueprints[task], spawn_point)
+                        #vehicles_list.append(actor)
 
-                        latent.append([zt_x_a + (x // 2) * 0.4, zt_y_a + (y // 2) * 0.4])
-                        action_latent.append([zt_x_a + (x // 2) * 0.4, zt_y_a + (y // 2) * 0.4, za])
-                    
-                    if task == 0 and za == 2.52:
-                        goal = learner.get_goal(latent, True) * 1.25
+
+                        latent.append([zt_x_a + (x // 2) * 0.1, zt_y_a + (y // 2) * 0.1])
+                        action_latent.append([zt_x_a + (x // 2) * 0.1, zt_y_a + (y // 2) * 0.1, za])
+                    if task == 0 and za == 0.24:
+                        goal = learner.get_goal(latent, True)
                         goal_traj = np.zeros((env_num, traj_len // traj_track_len + 1, 2), np.float32)
                         goal_traj[:, 1:] = goal
+                        #goal_traj *= np.array([1., 1.5])
                         for x, y in itertools.product(range(0, 10, 2), range(0, 10, 2)):
                             i = x + y * 10
-                            traj_map_ind = np.full((1024, 1024, 3), 0, np.uint8)
-                            r = np.array([(goal_traj[i] + goal_traj[i + 1] + goal_traj[i + 10] + goal_traj[i + 11]) * 10. + 512.], np.int32)
-                            cv2.polylines(traj_map, r, False, GetColor(latent[i][0], latent[i][1]))
-                            cv2.polylines(traj_map_ind, r, False, (255, 255, 255))
-                            cv2.imwrite(log_name + "traj_map_%.2f_%.2f.png" % (latent[i][0], latent[i][1]), traj_map_ind)
+                            #traj_map_ind = np.full((1024, 1024, 3), 0, np.uint8)
+                            if i % 8 == 0:
+                                r = np.array([(goal_traj[i] + goal_traj[i + 1] + goal_traj[i + 10] + goal_traj[i + 11]) * 3. + 512.], np.int32)
+                                cv2.polylines(traj_map, r, False, GetColor(latent[i][0], latent[i][1]))
+                            #cv2.polylines(traj_map_ind, r, False, (255, 255, 255))
+                            #cv2.imwrite(log_name + "traj_map_%.2f_%.2f.png" % (latent[i][0], latent[i][1]), traj_map_ind)
 
                             log_traj_file.write(str(latent[i][0]) + "\t" + str(latent[i][1]))
                             for g in goal[i]:
                                 log_traj_file.write("\t" + str(g[0]) + "\t" + str(g[1]))
                             log_traj_file.write("\n")
                             log_traj_file.flush()
-                        cv2.imwrite(log_name + "traj_map.png", traj_map)
+                cv2.imwrite(log_name + "traj_map.png", traj_map)
                     
-
+                '''
                     for step in range(30):
                         world.tick()
 
@@ -252,8 +251,9 @@ try:
 
                     client.apply_batch([carla.command.DestroyActor(x) for x in vehicles_list])
                     print("Task " + str(task) +  "_" + str(za) + " l1 " +  str(zt_x_a) +  " l2 " +  str(zt_y_a) )
-                cv2.imwrite(log_name + "traj_task_map_%d_%.2f.png" % (task, za), traj_task_map)
-
+                    '''
+                #cv2.imwrite(log_name + "traj_task_map_%d_%.2f.png" % (task, za), traj_task_map)
+                
 
 
 

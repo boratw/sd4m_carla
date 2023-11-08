@@ -77,7 +77,10 @@ def get_state(i, actor):
     vx, vy = rotate(v.x, v.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
     ax, ay = rotate(a.x, a.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
     fx, fy = rotate(f.x, f.y, first_traj_yaw[i][0], first_traj_yaw[i][1])
-    return [1., px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch]
+    if controller < 3:
+        return [1., px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch]
+    else:
+        return [float(step % traj_len + 1), px, py, vx, vy, ax, ay, fx, fy, tr.rotation.roll, tr.rotation.pitch]
 
 def get_control(actor, action, control):
     if controller < 3:
@@ -129,7 +132,7 @@ try:
         explorer_savers[2].restore(sess, "train_log/Train2_1/log_2023-09-26-16-30-57_explorer2_250.ckpt")
 
         latent_for_task = []
-        for task in range(task_num):
+        for task in range(7, 11):
             ratio_fl = 200.
             ratio_fr = 200.
             ratio_rl = 200.
@@ -151,7 +154,10 @@ try:
 
             env_num = 25
             for route_it, route in enumerate([route_straight, route_leftturn, route_rightturn, route_uturn]): 
-                for controller in range(3, 5):
+                for controller in range(5):
+                    if task == 0:
+                        if controller == 3:
+                            continue
                     log_pos = [[] for _ in range(env_num)]
                     log_vel = [[] for _ in range(env_num)]
                     log_distance = [[] for _ in range(env_num)]
@@ -191,7 +197,6 @@ try:
                         if controller < 3:
                             actions = explorer[controller].get_action(states, goals, True)
                         else:
-                            print(action_latent[0])
                             actions = learner.get_action(states, action_latent, True)
                         vehiclecontrols = []
                         for i, actor in enumerate(vehicles_list):
@@ -226,8 +231,7 @@ try:
                                     yawcos = np.cos(yaw)
                                     dx, dy = rotate(dx1 - px, dy1 - py, yawsin, yawcos)
                                     if controller < 3:
-                                        d = np.sqrt(dx ** 2 + dy ** 2) / 2.
-                                        target_pos.append([dx / d, dy / d])
+                                        target_pos.append([dx / 4., dy / 4.])
                                     else:
                                         steer = int(np.round(dy * 10 / dx))
                                         if steer < -10:

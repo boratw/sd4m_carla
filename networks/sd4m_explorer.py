@@ -111,7 +111,7 @@ class Skill_Explorer:
         input_list = {self.input_state : input_state, self.input_goal : input_goal, self.input_dropout : 0.0}
         sess = tf.get_default_session()
         if discrete:
-            output = sess.run(self.explorer_policy.mu, input_list)
+            output = sess.run(self.explorer_policy.output_discrete, input_list)
         else:
             output = sess.run(self.explorer_policy.reparameterized, input_list)
         return output
