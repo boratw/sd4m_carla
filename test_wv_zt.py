@@ -46,8 +46,8 @@ env_num = 64
 learner_batch = 16
 
 def GetColor(z1, z2):
-    z1 = z1 / 4.0
-    z2 = z2 / 4.0
+    z1 = z1 / 2.0
+    z2 = z2 / 2.0
     color =  ( int( np.clip((0.5 + 1.28  * z2) * 255, 0, 255 ) ),
                 int( np.clip((0.5 -  0.214 * z1 - 0.380 * z2) * 255, 0, 255 )),
                 int( np.clip((0.5 + 2.128 * z1) * 255, 0, 255) ))
@@ -81,7 +81,7 @@ def get_control(actor, action):
     control.reverse = False
     return carla.command.ApplyVehicleControl(actor, control)
 
-log_name = "test_log/Train3_2_2/"
+log_name = "test_log/Train3_6_2/"
 log_latent_file = open(log_name + "latent.txt", "wt")
 log_traj_file = open(log_name + "traj.txt", "wt")
 traj_map = np.full((1024, 1024, 3), 255, np.uint8)
@@ -106,7 +106,7 @@ try:
 
         learner = Skill_Learner(state_len, action_len, goal_len, traj_len, traj_track_len, latent_len, latent_body_len, task_num)
         learner_saver = tf.train.Saver(max_to_keep=0, var_list=learner.trainable_dict)
-        learner_saver.restore(sess, "train_log/Train3_2/log_2023-10-14-01-18-22_learner_1500.ckpt")
+        learner_saver.restore(sess, "train_log/Train3_6_2/log_2023-11-14-18-00-49_learner_440.ckpt")
         for task in range(9):
             ratio_fl = 200.
             ratio_fr = 200.
@@ -141,8 +141,8 @@ try:
             for za in [0.24, -2.4, 1.8, maxlatent[task]]:
                 traj_task_map = np.full((1024, 1024, 3), 255, np.uint8)
                 log_traj_task_file = open(log_name + "traj_task_%d_%.2f.txt" % (task, za), "wt")
-                for zt_x_a, zt_y_a in itertools.product([-4., -3.5, -3., -2.5, -2., -1.5, -1., -0.5, 0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5],
-                    [-4., -3.5, -3., -2.5, -2., -1.5, -1., -0.5, 0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5]):
+                for zt_x_a, zt_y_a in itertools.product([-2., -1.5, -1., -0.5, 0., 0.5, 1., 1.5],
+                    [-2., -1.5, -1., -0.5, 0., 0.5, 1., 1.5]):
                     vehicles_list = []
                     latent = []
                     action_latent = []
@@ -164,7 +164,7 @@ try:
                             i = x + y * 10
                             #traj_map_ind = np.full((1024, 1024, 3), 0, np.uint8)
                             if i % 8 == 0:
-                                r = np.array([(goal_traj[i] + goal_traj[i + 1] + goal_traj[i + 10] + goal_traj[i + 11]) * 3. + 512.], np.int32)
+                                r = np.array([(goal_traj[i] + goal_traj[i + 1] + goal_traj[i + 10] + goal_traj[i + 11]) * 5. + 512.], np.int32)
                                 cv2.polylines(traj_map, r, False, GetColor(latent[i][0], latent[i][1]))
                             #cv2.polylines(traj_map_ind, r, False, (255, 255, 255))
                             #cv2.imwrite(log_name + "traj_map_%.2f_%.2f.png" % (latent[i][0], latent[i][1]), traj_map_ind)

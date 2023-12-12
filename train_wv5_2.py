@@ -39,7 +39,7 @@ traj_track_len = 10
 latent_len = 3
 latent_body_len = 2
 latent_preserve = 4
-task_num = 3
+task_num = 5
 env_num = 64
 
 learner_batch = 16
@@ -72,9 +72,11 @@ try:
         world = client.get_world()
 
         #learner_saver.restore(sess, "train_log/Train3_6/log_2023-11-09-17-47-28_learner_340.ckpt")
-        explorer_savers[0].restore(sess, "train_log/Train3_6/log_2023-11-09-17-47-28_explorer0_200.ckpt")
-        explorer_savers[1].restore(sess, "train_log/Train3_6/log_2023-11-09-17-47-28_explorer1_200.ckpt")
-        explorer_savers[2].restore(sess, "train_log/Train3_6/log_2023-11-09-17-47-28_explorer2_200.ckpt")
+        explorer_savers[0].restore(sess, "train_log/Train3_6/log_2023-11-10-14-08-59_explorer0_500.ckpt")
+        explorer_savers[1].restore(sess, "train_log/Train3_6/log_2023-11-10-14-08-59_explorer1_500.ckpt")
+        explorer_savers[2].restore(sess, "train_log/Train3_6/log_2023-11-10-14-08-59_explorer2_500.ckpt")
+        explorer_savers[3].restore(sess, "train_log/Train3_6/log_2023-11-10-14-08-59_explorer1_500.ckpt")
+        explorer_savers[4].restore(sess, "train_log/Train3_6/log_2023-11-10-14-08-59_explorer2_500.ckpt")
 
         settings = world.get_settings()
         settings.substepping = True
@@ -87,6 +89,8 @@ try:
 
         bp_library = world.get_blueprint_library()
         blueprints = [bp_library.find("vehicle.neubility.delivery4w"),
+                    bp_library.find("vehicle.neubility.delivery4w"),
+                    bp_library.find("vehicle.neubility.delivery4w"),
                     bp_library.find("vehicle.neubility.delivery4w"),
                     bp_library.find("vehicle.neubility.delivery4w")]
         for exp in range(341, 2001):
@@ -111,12 +115,22 @@ try:
                     ratio_fr = 100.
                     ratio_rl = 100.
                     ratio_rr = 100.
-                if task == 1:
+                elif task == 1:
                     ratio_fl = 200.
                     ratio_fr = 50.
                     ratio_rl = 200.
                     ratio_rr = 50.
-                if task == 2:
+                elif task == 2:
+                    ratio_fl = 50.
+                    ratio_fr = 200.
+                    ratio_rl = 50.
+                    ratio_rr = 200.
+                elif task == 3:
+                    ratio_fl = 200.
+                    ratio_fr = 50.
+                    ratio_rl = 200.
+                    ratio_rr = 50.
+                elif task == 4:
                     ratio_fl = 50.
                     ratio_fr = 200.
                     ratio_rl = 50.
@@ -191,6 +205,16 @@ try:
                         control.fr=float(actions[i][1] * ratio_fr)
                         control.bl=float(actions[i][2] * ratio_rl)
                         control.br=float(actions[i][3] * ratio_rr)
+                        if task == 3:
+                            control.fl += 0.25
+                            control.fr -= 0.25
+                            control.bl += 0.25
+                            control.br -= 0.25
+                        elif task == 4:
+                            control.fl -= 0.25
+                            control.fr += 0.25
+                            control.bl -= 0.25
+                            control.br += 0.25
                         control.gear = 1
                         control.manual_gear_shift = True
                         control.hand_brake = False

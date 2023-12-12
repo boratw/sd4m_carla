@@ -1,19 +1,23 @@
 import numpy as np
 import json
 import cv2
+import matplotlib
 import matplotlib.pyplot as plt
 import os
 import itertools
 import math
 
 
-log_dir = 'test_log/Train3_5/break_test/'
-output_dir = 'test_log/Train3_5/break_test_log/'
+log_dir = 'test_log/Train3_6_2/break_test/'
+output_dir = 'test_log/Train3_6_2/break_test_log/'
+
+matplotlib.rc('font', size=16)
+matplotlib.rc('axes', titlesize=16, labelsize=16)
 #filenames = os.listdir(log_dir)
 #for filename in filenames:
 #    if filename[-4:] == 'json':
-for task in range(4):
-    for brk in range(25, 85, 10):
+for task in [3]:
+    for brk in [40]:
         for route in range(4):
         
             start_index = 10
@@ -64,17 +68,13 @@ for task in range(4):
                                 action2.append([])
                                 action3.append([])
                                 za.append([])
-                            if control == 1:
-                                prev_lat = prev_lat * 0.75 + obj_distance[i][j] * 0.25
-                                lat[t].append(prev_lat)
-                            else:
-                                lat[t].append(obj_distance[i][j])
+                            lat[t].append(obj_distance[i][j])
                             vel[t].append(math.sqrt(obj_vel[i][j][0] ** 2 + obj_vel[i][j][1] ** 2))
                             action0[t].append(obj_action[i][j][0])
                             action1[t].append(obj_action[i][j][1])
                             action2[t].append(obj_action[i][j][2])
                             action3[t].append(obj_action[i][j][3])
-                            za[t].append(obj_za[i][j])
+                            za[t].append(obj_za[i][j] / 10.)
                             readed_it = t
                     lastindex.append(readed_it)
                 if end_index < np.min(lastindex):
@@ -100,17 +100,16 @@ for task in range(4):
 
 
                 plt.figure()
-                step = np.arange(10, 80)
+                step = np.arange(10, 70)
                 plt.xlabel('step')
                 plt.ylabel('wheel')
                 plt.ylim([-1.0, 1.0])
-                plt.rc('font', size=12)
 
                 for f, c, l, action in zip(['red', 'magenta', 'green', 'blue'], ['ro-', 'm^-', 'g*-', 'bs-'], 
                     ['FL', 'FR', 'RL', 'RR'], [action0, action1, action2, action3]):
                     action_mean = []
                     action_var = []
-                    for i in range(10, 80):
+                    for i in range(10, 70):
                         action_mean.append(np.mean(action[i]))
                         action_var.append(np.std(action[i]))
                     action_mean = np.array(action_mean)
@@ -121,39 +120,38 @@ for task in range(4):
                         alpha=0.25, facecolor=f, antialiased=True)
                     plt.plot(step, action_mean,  c, label=l)
                 plt.legend()
-                plt.savefig(output_dir + filename[:-5] + "_wheel.png", dpi=200)
+                plt.savefig(output_dir + filename[:-5] + "_wheel.png", dpi=300, bbox_inches="tight")
                 plt.close()
 
                 plt.figure()
-                step = np.arange(10, 80)
+                step = np.arange(10, 70)
                 plt.xlabel('step')
                 plt.ylabel('za')
                 plt.rc('font', size=12)
 
                 za_mean = []
                 za_var = []
-                for i in range(10, 80):
+                for i in range(10, 70):
                     za_mean.append(np.mean(za[i]))
                     za_var.append(np.std(za[i]))
                 za_mean = np.array(za_mean)
-                za_var = np.array(za_var) / 10.
+                za_var = np.array(za_var)
                 plt.fill_between(step, za_mean - za_var, za_mean + za_var,
                     alpha=0.25, facecolor=f, antialiased=True)
                 plt.plot(step, za_mean,  c, label=l)
                 plt.legend()
-                plt.savefig(output_dir + filename[:-5] + "_za.png", dpi=200)
+                plt.savefig(output_dir + filename[:-5] + "_za.png", dpi=300, bbox_inches="tight")
                 plt.close()
             
             for text, logs, lim in zip (['distance', 'velocity'], [log_lat, log_vel], [[-2, 2], [0, 20]]):
                 plt.figure()
                 plt.xlabel('step')
                 plt.ylabel(text)
-                #plt.ylim(lim)
-                plt.rc('font', size=12)
+                plt.ylim(lim)
 
                 log1_mean = []
                 log1_var = []
-                for i in range(10, 80):
+                for i in range(10, 70):
                     log1_mean.append(np.mean(logs[0][i]))
                     log1_var.append(np.std(logs[0][i]))
                 log1_mean = np.array(log1_mean)
@@ -161,19 +159,19 @@ for task in range(4):
 
                 log2_mean = []
                 log2_var = []
-                for i in range(10, 80):
+                for i in range(10, 70):
                     log2_mean.append(np.mean(logs[1][i]))
                     log2_var.append(np.std(logs[1][i]))
                 log2_mean = np.array(log2_mean)
                 log2_var = np.array(log2_var)
 
-                plt.fill_between(np.arange(10, 80), log1_mean - log1_var,  log1_mean + log1_var,
+                plt.fill_between(np.arange(10, 70), log1_mean - log1_var,  log1_mean + log1_var,
                     alpha=0.25, facecolor='blue', antialiased=True)
-                plt.fill_between(np.arange(10, 80), log2_mean - log2_var,  log2_mean + log2_var,
+                plt.fill_between(np.arange(10, 70), log2_mean - log2_var,  log2_mean + log2_var,
                     alpha=0.25, facecolor='red', antialiased=True)
-                plt.plot(np.arange(10, 80), log1_mean,  'b--', label='SAC')
-                plt.plot(np.arange(10, 80), log2_mean, 'r-', label='Ours')
+                plt.plot(np.arange(10, 70), log1_mean,  'b--', label='SAC')
+                plt.plot(np.arange(10, 70), log2_mean, 'r-', label='Ours')
                 plt.legend()
-                plt.savefig(output_dir + "task_" + str(task)  + "_break_" + str(brk) + "_route_" + str(route) + "_" + text + ".png", dpi=300)
+                plt.savefig(output_dir + "task_" + str(task)  + "_break_" + str(brk) + "_route_" + str(route) + "_" + text + ".png", dpi=300, bbox_inches="tight")
                 plt.close()
 

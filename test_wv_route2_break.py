@@ -51,16 +51,16 @@ route_leftturn = [[2.0, 0.0], [4.0, 0.0], [6.0, 0.0], [8.0, 0.0], [10.0, 0.0], [
 route_rightturn = [[2.0, 0.0], [4.0, 0.0], [6.0, 0.0], [8.0, 0.0], [10.0, 0.0], [12.0, 0.0], [14.0, 0.0], [16.0, 0.0], [18.0, 0.0], [20.0, 0.0], [22.0, 0.0], [24.0, 0.0], [26.0, 0.0], [28.0, 0.0], [30.0, 0.0], [32.0, 0.0], [34.0, 0.0], [36.0, 0.0], [38.0, 0.0], [40.0, 0.0], [42.0, 0.0], [44.0, 0.0], [46.0, 0.0], [48.0, 0.0], [50.0, 0.0], [52.0, 0.0], [54.0, 0.0], [56.0, 0.0], [58.0, 0.0], [60.0, 0.0], [62.0, 0.0], [64.0, 0.0], [66.0, 0.0], [68.0, 0.0], [70.0, 0.0], [72.0, 0.0], [74.0, 0.0], [75.99238939576509, 0.1743114902776158], [77.93298084506526, 0.6581552945192664], [79.74559640899452, 1.5033918397546215], [81.32161789374598, 2.7347148191559665], [82.55294080505516, 4.310736357106862], [83.39817727197627, 6.1233519575546556], [83.88202099237446, 8.063943427759353], [84.0563323965707, 10.056332831055592], [84.05633231016049, 12.05633283105559], [84.05633222375027, 14.056332831055588], [84.05633213734006, 16.056332831055585], [84.05633205092985, 18.056332831055585], [84.05633196451964, 20.056332831055585], [84.05633187810943, 22.056332831055585], [84.05633179169922, 24.056332831055585], [84.05633170528901, 26.056332831055585], [84.0563316188788, 28.056332831055585], [84.05633153246859, 30.056332831055585], [84.05633144605838, 32.056332831055585], [84.05633135964817, 34.056332831055585], [84.05633127323796, 36.056332831055585], [84.05633118682775, 38.056332831055585], [84.05633110041754, 40.056332831055585], [84.05633101400733, 42.056332831055585], [84.05633092759712, 44.056332831055585], [84.0563308411869, 46.056332831055585], [84.0563307547767, 48.056332831055585], [84.05633066836648, 50.056332831055585], [84.05633058195627, 52.056332831055585], [84.05633049554606, 54.056332831055585], [84.05633040913585, 56.056332831055585], [84.05633032272564, 58.056332831055585], [84.05633023631543, 60.056332831055585], [84.05633014990522, 62.056332831055585], [84.05633006349501, 64.05633283105558], [84.0563299770848, 66.05633283105558], [84.05632989067459, 68.05633283105558], [84.05632980426438, 70.05633283105558], [84.05632971785417, 72.05633283105558], [84.05632963144396, 74.05633283105558], [84.05632954503375, 76.05633283105558], [84.05632945862354, 78.05633283105558], [82.05632945862355, 78.05633265823518], [82.05632937221334, 80.05633265823518], [82.05632928580313, 82.05633265823518], [82.05632919939292, 84.05633265823518], [82.05632911298271, 86.05633265823518], [82.0563290265725, 88.05633265823518], [82.05632894016229, 90.05633265823518], [82.05632885375208, 92.05633265823518], [82.05632876734187, 94.05633265823518], [82.05632868093166, 96.05633265823518]]
 route_uturn = [[2.0, 0.0], [4.0, 0.0], [6.0, 0.0], [8.0, 0.0], [10.0, 0.0], [12.0, 0.0], [14.0, 0.0], [16.0, 0.0], [18.0, 0.0], [20.0, 0.0], [22.0, 0.0], [24.0, 0.0], [26.0, 0.0], [28.0, 0.0], [30.0, 0.0], [32.0, 0.0], [34.0, 0.0], [36.0, 0.0], [38.0, 0.0], [40.0, 0.0], [42.0, 0.0], [44.0, 0.0], [46.0, 0.0], [48.0, 0.0], [50.0, 0.0], [52.0, 0.0], [54.0, 0.0], [56.0, 0.0], [58.0, 0.0], [60.0, 0.0], [62.0, 0.0], [64.0, 0.0], [66.0, 0.0], [68.0, 0.0], [70.0, 0.0], [72.0, 0.0], [74.0, 0.0], [75.99878165397118, -0.06979899532405902], [77.99117104973627, -0.2441104856016748], [79.97626335219985, -0.4878491790826679], [81.95164003203837, -0.800718117697765], [83.92125553639556, -1.148014482486897], [85.8845099012757, -1.5296324836071942], [87.84776426615585, -1.9112504847274914], [89.81737977051304, -2.258546849516623], [91.79275645035156, -2.5714157881317203], [93.77784875281515, -2.8151544816127134], [95.77023814858023, -2.989465971890329], [97.76901980255141, -3.0592649672143883], [99.76901980255141, -3.0592649672143883], [101.76901980255141, -3.0592649672143883], [103.76901980255141, -3.0592649672143883], [105.76901980255141, -3.0592649672143883], [107.76901980255141, -3.0592649672143883], [109.76901980255141, -3.0592649672143883], [111.76901980255141, -3.0592649672143883], [113.76901980255141, -3.0592649672143883], [115.76901980255141, -3.0592649672143883], [117.76901980255141, -3.0592649672143883], [119.76901980255141, -3.0592649672143883], [121.76901980255141, -3.0592649672143883], [123.76901980255141, -3.0592649672143883], [125.76901980255141, -3.0592649672143883], [127.76901980255141, -3.0592649672143883], [129.7690198025514, -3.0592649672143883], [131.7690198025514, -3.0592649672143883], [133.7690198025514, -3.0592649672143883], [135.7690198025514, -3.0592649672143883], [137.7690198025514, -3.0592649672143883], [139.7690198025514, -3.0592649672143883], [141.7690198025514, -3.0592649672143883], [143.7690198025514, -3.0592649672143883], [145.7690198025514, -3.0592649672143883], [147.7690198025514, -3.0592649672143883], [149.7690198025514, -3.0592649672143883], [151.7690198025514, -3.0592649672143883], [153.7690198025514, -3.0592649672143883], [155.7690198025514, -3.0592649672143883], [157.7690198025514, -3.0592649672143883], [159.7690198025514, -3.0592649672143883], [161.7690198025514, -3.0592649672143883], [163.7690198025514, -3.0592649672143883], [165.7690198025514, -3.0592649672143883], [167.7690198025514, -3.0592649672143883], [169.7690198025514, -3.0592649672143883], [171.7690198025514, -3.0592649672143883], [173.7690198025514, -3.0592649672143883], [175.7690198025514, -3.0592649672143883], [177.7690198025514, -3.0592649672143883], [179.7690198025514, -3.0592649672143883]]
 
+latent_task = [[1.3, -1.2], #<- -1.0
+    [1.4, -1.1], [1.2, -1.1], [1.0, -1.1], [1.1, -1.0], [1.4, -0.8], #<- -0.75
+    [0.8, -1.0], [0.8, -0.9], [0.8, -0.8], [1.1, -0.5], [0.9, -0.5], #<- -0.5
+    [0.7, -0.5], [0.5, -0.6], [0.7, -0.1], [0.6, 0.0], [0.5, 0.1], #<- -0.25
+    [0.4, 0.2], [0.3, 0.2], [0.2, 0.1], [0.1, 0.1], [0.0, 0.5], #<- 0.0
+    [-0.1, 0.2], [-0.2, 0.0], [-0.3, 0.1], [-0.4, 0.0], [-0.5, 0.0], #<- 0.25
+    [-0.7, 0.1], [-0.7, -0.2], [-0.9, -0.2], [-0.9, -0.4], [-0.9, -0.6], #<- 0.5
+    [-1.0, -0.6], [-1.2, -0.6], [-1.1, -0.8], [-1.4, -0.7], [-1.4, -0.8], #<- 0.75
+    [-0.9, -1.2], [-1.3, -1.0], [-1.6, -0.9], [-1.8, -0.9], [-1.7, 1.0]] #<- 1.0
 
-latent_task = [[0.1, -3.4], #<- -1.0
-    [-0.1, -3.6], [0.1, -3.3], [0.0, -3.4], [0.2, -3.1], [-0.1, -3.4], #<- -0.75
-    [0.3, -2.9], [-0.2, -3.4], [-0.1, -3.2], [-0.2, -3.2], [-0.3, -3.2], #<- -0.5
-    [-0.1, -2.9], [0.1, -2.6], [-0.1, -2.6], [-0.4, -2.6], [-0.1, -2.2], #<- -0.25
-    [-0.5, -2.0], [-0.1, -1.6], [-0.9, -0.9], [-0.6, -0.3], [-0.5, 0.3], #<- 0.0
-    [0.0, 0.2], [0.1, 0.6], [0.5, 0.4], [0.8, 0.1], [1.0, 0.9], #<- 0.25
-    [1.2, 0.8], [1.4, 1.0], [1.4, 0.2], [1.7, 1.1], [1.7, 0.7], #<- 0.5
-    [2.0, 1.4], [1.6, -0.2], [1.7, 0.0], [1.9, 0.5], [2.4, 1.7], #<- 0.75
-    [2.1, 0.8], [2.1, 0.7], [1.8, -0.2], [2.0, 0.3], [1.7, -0.6]] #<- 1.0
 
 maxlatent = [0.284, -0.46, 1.028, 0.808, -0.392, 0.784, -0.396, -0.64, 2.24]
 latentcand = [0.284, -0.46, 1.028]
@@ -68,7 +68,7 @@ latentcand = [0.284, -0.46, 1.028]
 def rotate(posx, posy, yawsin, yawcos):
     return posx * yawcos - posy * yawsin, posx * yawsin + posy * yawcos
   
-log_name = "test_log/Train3_5/break_test/"
+log_name = "test_log/Train3_6_2/break_test/"
 
 def get_state(i, actor):
     tr = actor.get_transform()
@@ -88,11 +88,6 @@ def get_control(actor, action, steer=0):
     control = carla.VehicleControl()
     if controller > 0:
         action = np.tanh(action + 0.25)
-    else:
-        action[0] = np.tanh((action[0] + 0.1) * (0.5 + steer * 0.025) + steer * 0.02) * 0.75
-        action[1] = np.tanh((action[1] + 0.1) * (0.5 - steer * 0.025) - steer * 0.02) * 0.75
-        action[2] = np.tanh((action[2] + 0.1) * (0.5 + steer * 0.025) + steer * 0.02) * 0.75
-        action[3] = np.tanh((action[3] + 0.1) * (0.5 - steer * 0.025) - steer * 0.02) * 0.75
     if ratio_fl < 0.:
         action[0] = (action[1] + action[2] + action[3]) / 3
     if ratio_fr < 0.:
@@ -138,7 +133,7 @@ try:
 
         learner = Skill_Learner(state_len, action_len, goal_len, traj_len, traj_track_len, latent_len, latent_body_len, task_num)
         learner_saver = tf.train.Saver(max_to_keep=0, var_list=learner.trainable_dict)
-        learner_saver.restore(sess, "train_log/Train3_5/log_2023-10-31-23-53-09_learner_500.ckpt")
+        learner_saver.restore(sess, "train_log/Train3_6_2/log_2023-11-14-18-00-49_learner_440.ckpt")
         explorer = [Skill_Explorer(state_len,  action_len, goal_len, name=str(i)) for i in range(task_num)]
         explorer_savers = [tf.train.Saver(max_to_keep=0, var_list=explorer[i].trainable_dict) for i in range(task_num)]
         explorer_savers[0].restore(sess, "train_log/Train3_2/log_2023-10-13-18-24-03_explorer0_200.ckpt")
@@ -147,10 +142,10 @@ try:
 
         task = 0
         env_num = 25
-        for task in range(8):
-            for break_time in [25, 35, 45, 55, 65, 75]:
+        for task in [3]:
+            for break_time in [40]:
                 for route_it, route in enumerate([route_straight, route_leftturn, route_rightturn, route_uturn]): 
-                    for controller in [0, 1]:
+                    for controller in [0]:
                         log_pos = [[] for _ in range(env_num)]
                         log_vel = [[] for _ in range(env_num)]
                         log_distance = [[] for _ in range(env_num)]
@@ -173,7 +168,7 @@ try:
                         first_traj_yaw = []
                         states = []
                         action_latent = []
-                        action_steer = []
+                        action_prev_pos = []
                         goals = []
                         for i, actor in enumerate(vehicles_list):
                             tr = actor.get_transform()
@@ -182,16 +177,16 @@ try:
                             first_traj_yaw.append([np.sin((tr.rotation.yaw + yaw_diff) * -0.017453293), np.cos((tr.rotation.yaw + yaw_diff) * -0.017453293)])
                             states.append(get_state(i, actor))
                             goals.append([0.2, 0.0])
-                            action_steer.append(0.)
-                            action_latent.append([-0.5, 0.3, 0.284])
+                            action_latent.append([0.0, 0.5, 3.6])
+                            action_prev_pos.append([first_traj_pos[i][0], first_traj_pos[i][0], first_traj_yaw[i][1], first_traj_yaw[i][1]])
 
                         route_target_iter = [0 for _ in range(env_num)]
                         route_current_iter = [0 for _ in range(env_num)]
-                        prev_lat = [0 for _ in range(env_num)]
-                        prev_lat_diff = [0 for _ in range(env_num)]
-                        zt = [0.284 for _ in range(env_num)]
+                        action_steer = [0 for _ in range(env_num)]
+                        prev_d = [0 for _ in range(env_num)]
+                        zt = [3.6 for _ in range(env_num)]
 
-                        for step in range(3000):
+                        for step in range(1500):
                             if controller < 1:
                                 actions = learner.get_action(states, action_latent, True)
                             else:
@@ -203,23 +198,17 @@ try:
                                     ratio_fr = 100.
                                     ratio_rl = 100.
                                     ratio_rr = 100.
-                                    if controller == 0:
-                                        yaw_diff = 2.
-                                    else:
-                                        yaw_diff = 0.
+                                    yaw_diff = 0.
+                                elif route_target_iter[i] == break_time :
+                                    ratio_fl = -100. if task == 0 else 100.
+                                    ratio_fr = -100. if task == 1 else 100.
+                                    ratio_rl = -100. if task == 2 else 100.
+                                    ratio_rr = -100. if task == 3 else 100.
                                 else:
-                                    ratio_fl = -50. if task == 0 else 100.
-                                    ratio_fr = -50. if task == 1 else 100.
-                                    ratio_rl = -50. if task == 2 else 100.
-                                    ratio_rr = -50. if task == 3 else 100.
-                                    if task == 4:
-                                        yaw_diff = -10.
-                                    elif task == 5:
-                                        yaw_diff = 10.
-                                    elif task == 6:
-                                        yaw_diff = -20.
-                                    elif task == 7 :
-                                        yaw_diff = 20.
+                                    ratio_fl = -70. if task == 0 else 100.
+                                    ratio_fr = -70. if task == 1 else 100.
+                                    ratio_rl = -70. if task == 2 else 100.
+                                    ratio_rr = -70. if task == 3 else 100.
 
                                 control = actor.get_control()
                                 log_wheel[i].append([control.fl, control.fr, control.bl, control.br])
@@ -232,7 +221,6 @@ try:
                                 first_traj_pos = []
                                 first_traj_yaw = []
                                 action_latent = []
-                                action_steer = []
                                 for i, actor in enumerate(vehicles_list):
 
                                     tr = actor.get_transform()
@@ -241,7 +229,7 @@ try:
                                     px, py = tr.location.x - first_pos[i][0], tr.location.y - first_pos[i][1]
                                     if i == 0:
                                         print(px, py)
-                                    tx, ty = px + f.x * 4.0, py + f.y * 4.0
+                                    tx, ty = px + f.x * 3.0, py + f.y * 3.0
                                     dx1, dy1 = route[route_target_iter[i]][0], route[route_target_iter[i]][1]
                                     if route_target_iter[i] != len(route) - 1:
                                         dx2, dy2 = route[route_target_iter[i] + 1][0], route[route_target_iter[i] + 1][1]
@@ -258,17 +246,17 @@ try:
 
                                         d = np.sqrt(dx ** 2 + dy ** 2)
                                         goals[i] = [dx * 2. / d, dy * 2.  / d]
-                                        steer = int(np.round(dy * 20 / dx))
+                                        steer = int(np.round(dy * 20 / dx + 0.3))
                                         if steer < -20:
                                             steer = -20
                                         elif steer > 20:
                                             steer = 20
-                                        action_steer.append(steer)
+                                        action_steer[i] = action_steer[i] * 0.5 + (steer - 0.7) * 0.5
                                         action_latent.append([latent_task[steer + 20][0], latent_task[steer + 20][1], zt[i]])
                                     else:
                                         goals[i] = [0.0, 0.0]
                                         action_steer.append(0.)
-                                        action_latent.append([1.6, -1.7, zt[i]])
+                                        action_latent.append([-2.0, -2.0,  zt[i]])
                                     first_traj_pos.append([tr.location.x, tr.location.y])
                                     first_traj_yaw.append([np.sin((tr.rotation.yaw + yaw_diff) * -0.017453293), np.cos((tr.rotation.yaw + yaw_diff) * -0.017453293)])
 
@@ -284,39 +272,27 @@ try:
                                         route_current_iter[i] += 1
                                 else:
                                     lat = 0.
+
                                 if controller == 0:
-                                    lat_diff = lat - prev_lat[i]
-                                    #lat_2nddiff = lat_diff - prev_lat_diff[i]
+                                    dx, dy = rotate(tr.location.x - action_prev_pos[i][0], tr.location.y - action_prev_pos[i][1], action_prev_pos[i][2], action_prev_pos[i][3])
+                                    d = dy * 200 / dx
+                                    prev_d[i] = prev_d[i] * 0.75 + d * 0.25
+
                                     if i == 0:
-                                        print(zt[0], route_target_iter[i], lat, lat_diff)
+                                        print(lat, zt[i], route_target_iter[i], action_steer[i], d, prev_d[i])
                                     if route_target_iter[i] >= 10 and route_target_iter[i] < 85:
-                                        diff = lat_diff + lat * 0.01
-                                        if task in [0, 2, 5, 7]:
-                                            if diff > 0.001 :
-                                                if diff < 0.01 :
-                                                    zt[i] += diff * 0.75 * (((2.0 - zt[i]) ** 1.5 if zt[i] < 2.0 else 0.) + 0.0001)
-                                                else :
-                                                    zt[i] += 0.01 * 0.75 * (((2.0 - zt[i]) ** 1.5 if zt[i] < 2.0 else 0.) + 0.0001)
-                                            if diff < -0.001:
-                                                if diff > -0.01 :
-                                                    zt[i] += diff * 0.25 * (((zt[i] - 0.6) ** 1.5 if zt[i] > 0.6 else 0.) + 0.0001)
-                                                else:
-                                                    zt[i] += -0.01 * 0.25 * (((zt[i] - 0.6) ** 1.5 if zt[i] > 0.6 else 0.) + 0.0001)
-                                        else:         
-                                            if diff > 0.001 :
-                                                if diff < 0.01 :
-                                                    zt[i] += diff * 0.25 * (((0.4 - zt[i]) ** 1.5 if zt[i] < -0.2 else 0.) + 0.0001)
-                                                else :
-                                                    zt[i] += 0.01 * 0.25 * (((0.4 - zt[i]) ** 1.5 if zt[i] < -0.2 else 0.) + 0.0001)
-                                            if diff < -0.001:
-                                                if diff > -0.01 :
-                                                    zt[i] += diff * 0.75 * (((zt[i] + 1.6) ** 1.5 if zt[i] > -1.6 else 0.) + 0.0001)
-                                                else:
-                                                    zt[i] += -0.01 * 0.75 * (((zt[i] + 1.6) ** 1.5 if zt[i] > -1.6 else 0.) + 0.0001)
+                                        diff = (action_steer[i] - prev_d[i]) * 1. / (abs(action_steer[i]) + 1.)
+                                        if diff > 0.3 :
+                                            if diff < 1.3 :
+                                                zt[i] += ((diff - 0.3) ** 2) * 1.5
+                                            else :
+                                                zt[i] += 1 * 1.5
+                                        if diff < -0.5:
+                                            if diff > -1.5 :
+                                                zt[i] -= ((- diff - 0.5) ** 1.5) * 1.0
+                                            else:
+                                                zt[i] -= 1 * 1.0
 
-
-                                    prev_lat[i] = lat
-                                    prev_lat_diff[i] = lat_diff
                                 log_pos[i].append([px, py])
                                 log_vel[i].append([v.x, v.y])
                                 log_distance[i].append(lat)
@@ -326,9 +302,12 @@ try:
 
 
                             states = []
+                            action_prev_pos = []
                             for i, actor in enumerate(vehicles_list):
                                 state = get_state(i, actor)
                                 states.append(state)
+                                tr = actor.get_transform()
+                                action_prev_pos.append([tr.location.x, tr.location.y, np.sin((tr.rotation.yaw + yaw_diff) * -0.017453293), np.cos((tr.rotation.yaw + yaw_diff) * -0.017453293)])
 
                         with open(log_name + "task_" + str(task) + "break_" + str(break_time) + "_control_" + str(controller) + "_route_" + str(route_it) + ".json", 'w') as f:
                             json.dump({"pos" : log_pos, "vel" : log_vel, "distance" : log_distance, "routeit" : log_routeit,
@@ -358,3 +337,28 @@ finally:
     client.apply_batch([carla.command.DestroyActor(x) for x in vehicles_list])
 
     time.sleep(0.5)
+
+'''
+                                        if task in [0, 2, 5, 7]:
+                                            if diff > 0.001 :
+                                                if diff < 0.01 :
+                                                    zt[i] += diff * 0.75 * (((2.0 - zt[i]) ** 1.5 if zt[i] < 2.0 else 0.) + 0.0001)
+                                                else :
+                                                    zt[i] += 0.01 * 0.75 * (((2.0 - zt[i]) ** 1.5 if zt[i] < 2.0 else 0.) + 0.0001)
+                                            if diff < -0.001:
+                                                if diff > -0.01 :
+                                                    zt[i] += diff * 0.25 * (((zt[i] - 0.6) ** 1.5 if zt[i] > 0.6 else 0.) + 0.0001)
+                                                else:
+                                                    zt[i] += -0.01 * 0.25 * (((zt[i] - 0.6) ** 1.5 if zt[i] > 0.6 else 0.) + 0.0001)
+                                        else:         
+                                            if diff > 0.001 :
+                                                if diff < 0.01 :
+                                                    zt[i] += diff * 0.25 * (((0.4 - zt[i]) ** 1.5 if zt[i] < -0.2 else 0.) + 0.0001)
+                                                else :
+                                                    zt[i] += 0.01 * 0.25 * (((0.4 - zt[i]) ** 1.5 if zt[i] < -0.2 else 0.) + 0.0001)
+                                            if diff < -0.001:
+                                                if diff > -0.01 :
+                                                    zt[i] += diff * 0.75 * (((zt[i] + 1.6) ** 1.5 if zt[i] > -1.6 else 0.) + 0.0001)
+                                                else:
+                                                    zt[i] += -0.01 * 0.75 * (((zt[i] + 1.6) ** 1.5 if zt[i] > -1.6 else 0.) + 0.0001)
+'''

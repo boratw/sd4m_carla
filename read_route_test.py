@@ -1,18 +1,23 @@
 import numpy as np
 import json
 import cv2
+import matplotlib
 import matplotlib.pyplot as plt
 import os
 import itertools
 import math
 
 
-log_dir = 'test_log/Train3_5/route_test2/'
-output_dir = 'test_log/Train3_5/route_test2_log/'
+log_dir = 'test_log/Train3_6_2/route_test2/'
+output_dir = 'test_log/Train3_6_2/route_test2_log/'
+
+
+matplotlib.rc('font', size=16)
+matplotlib.rc('axes', titlesize=16, labelsize=16)
 #filenames = os.listdir(log_dir)
 #for filename in filenames:
 #    if filename[-4:] == 'json':
-for task in range(4):
+for task in range(7):
     for route in range(4):
         start_index = 10
         end_index= 0
@@ -22,7 +27,7 @@ for task in range(4):
         log_action1 = []
         log_action2 = []
         log_action3 = []
-        for control in [1, 2]:
+        for control in range(4):
             filename = "task_" + str(task) + "_control_" + str(control) + "_route_" + str(route) + ".json"
             with open(log_dir + filename) as f:
                 json_object = json.load(f)
@@ -91,7 +96,7 @@ for task in range(4):
             plt.xlabel('step')
             plt.ylabel('wheel')
             plt.ylim([-1.0, 1.0])
-            plt.rc('font', size=12)
+            #plt.rc('font', size=24)
 
             for f, c, l, action in zip(['red', 'magenta', 'green', 'blue'], ['ro-', 'm^-', 'g*-', 'bs-'], 
                 ['FL', 'FR', 'RL', 'RR'], [action0, action1, action2, action3]):
@@ -107,16 +112,16 @@ for task in range(4):
                 plt.fill_between(step, action_mean - action_var, action_mean + action_var,
                     alpha=0.25, facecolor=f, antialiased=True)
                 plt.plot(step, action_mean,  c, label=l)
-            plt.legend()
-            plt.savefig(output_dir + filename[:-5] + "_wheel.png", dpi=200)
+            #plt.legend()
+            plt.savefig(output_dir + filename[:-5] + "_wheel.png", dpi=300, bbox_inches="tight")
             plt.close()
-        '''
-        for text, logs, lim in zip (['distance', 'velocity'], [log_lat, log_vel], [[-2, 2], [0, 20]]):
+        
+        for text, logs, lim in zip (['distance', 'velocity'], [log_lat, log_vel], [[-1, 1], [2, 4]]):
             plt.figure()
             plt.xlabel('step')
             plt.ylabel(text)
-            #plt.ylim(lim)
-            plt.rc('font', size=12)
+            plt.ylim(lim)
+            #plt.rc('font', size=24)
 
             log1_mean = []
             log1_var = []
@@ -129,8 +134,8 @@ for task in range(4):
             log2_mean = []
             log2_var = []
             for i in range(10, 70):
-                log2_mean.append(np.mean(logs[1][i]))
-                log2_var.append(np.std(logs[1][i]))
+                log2_mean.append(np.mean(logs[3][i]))
+                log2_var.append(np.std(logs[3][i]))
             log2_mean = np.array(log2_mean)
             log2_var = np.array(log2_var)
 
@@ -141,6 +146,6 @@ for task in range(4):
             plt.plot(np.arange(10, 70), log1_mean,  'b--', label='SAC')
             plt.plot(np.arange(10, 70), log2_mean, 'r-', label='Ours')
             plt.legend()
-            plt.savefig(output_dir + "task_" + str(task) + "_route_" + str(route) + "_" + text + ".png", dpi=300)
+            plt.savefig(output_dir + "task_" + str(task) + "_route_" + str(route) + "_" + text + ".png", dpi=300, bbox_inches="tight")
             plt.close()
-        '''
+        
