@@ -116,9 +116,9 @@ for task in range(7):
             plt.savefig(output_dir + filename[:-5] + "_wheel.png", dpi=300, bbox_inches="tight")
             plt.close()
         
-        for text, logs, lim in zip (['distance', 'velocity'], [log_lat, log_vel], [[-1, 1], [2, 4]]):
+        for text, logs, lim in zip (['distance (m)', 'velocity'], [log_lat, log_vel], [[-1, 1], [2, 4]]):
             plt.figure()
-            plt.xlabel('step')
+            plt.xlabel('steps')
             plt.ylabel(text)
             plt.ylim(lim)
             #plt.rc('font', size=24)

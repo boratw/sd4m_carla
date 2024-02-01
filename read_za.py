@@ -68,7 +68,7 @@ for task in range(3):
                 w21 = float(sep[12]) + w1 ** 2 / 4
                 w21 = w21 / 64 - w1 ** 2 / 4
                 ts4.append(w21 )
-    for name, lim, m, s in zip(['score', 'velocity', 'error'], [[ -250, 250], [1, 3], [0, 2]], [score_m, vel_m, lat_m], [score_s, vel_s, lat_s]):
+    for name, lim, m, s in zip(['score', 'velocity (m/s)', 'error (m)'], [[ -250, 250], [1, 3], [0, 2]], [score_m, vel_m, lat_m], [score_s, vel_s, lat_s]):
         plt.figure()
         plt.xlabel('za')
         plt.ylabel(name)
@@ -80,8 +80,8 @@ for task in range(3):
         plt.fill_between(za, m - s,  m + s,
             alpha=0.25, facecolor='red', antialiased=True)
         plt.plot(za, m,  'r-', label=name)
-        plt.legend()
-        plt.savefig(log_dir + filename[:-5] + "_" + name +".png", dpi=300, bbox_inches="tight")
+        #plt.legend()
+        plt.savefig(log_dir + filename[:-5] + "_" + name[:-4] +".png", dpi=300, bbox_inches="tight")
 
     plt.figure()
     plt.xlabel('za')

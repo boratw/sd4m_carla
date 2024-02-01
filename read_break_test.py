@@ -16,7 +16,7 @@ matplotlib.rc('axes', titlesize=16, labelsize=16)
 #filenames = os.listdir(log_dir)
 #for filename in filenames:
 #    if filename[-4:] == 'json':
-for task in [3]:
+for task in range(4):
     for brk in [40]:
         for route in range(4):
         
@@ -125,7 +125,7 @@ for task in [3]:
 
                 plt.figure()
                 step = np.arange(10, 70)
-                plt.xlabel('step')
+                plt.xlabel('steps')
                 plt.ylabel('za')
                 plt.rc('font', size=12)
 
@@ -143,9 +143,9 @@ for task in [3]:
                 plt.savefig(output_dir + filename[:-5] + "_za.png", dpi=300, bbox_inches="tight")
                 plt.close()
             
-            for text, logs, lim in zip (['distance', 'velocity'], [log_lat, log_vel], [[-2, 2], [0, 20]]):
+            for text, logs, lim in zip (['distance (m)', 'velocity'], [log_lat, log_vel], [[-2, 2], [0, 20]]):
                 plt.figure()
-                plt.xlabel('step')
+                plt.xlabel('steps')
                 plt.ylabel(text)
                 plt.ylim(lim)
 
